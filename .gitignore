@@ -1,0 +1,9 @@
+﻿ckdenv/
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.sqlite3
+.streamlit/secrets.toml
+src/catboost_info/
+notebooks/catboost_info/
