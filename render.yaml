@@ -1,0 +1,27 @@
+services:
+  # ── Flask API backend ──────────────────────────────────────────────────────
+  - type: web
+    name: nephroscan-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --chdir Frontend app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.2"
+
+  # ── Streamlit frontend ─────────────────────────────────────────────────────
+  - type: web
+    name: nephroscan-frontend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run Frontend/streamlit_app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.2"
+      # After deploying nephroscan-api, set FLASK_API_URL to its public URL
+      # e.g. https://nephroscan-api.onrender.com
+      - key: FLASK_API_URL
+        fromService:
+          name: nephroscan-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL

@@ -48,7 +48,11 @@ def _start_flask_backend():
     # Give Flask a moment to bind the port
     time.sleep(2)
 
-_start_flask_backend()
+# On Render (or any cloud with FLASK_API_URL set), the Flask service runs as a
+# separate Render web service — no need to start it locally.
+_IS_CLOUD = bool(os.environ.get("RENDER") or os.environ.get("FLASK_API_URL"))
+if not _IS_CLOUD:
+    _start_flask_backend()
 
 from database import (
     authenticate_user,
@@ -77,8 +81,9 @@ st.set_page_config(
     initial_sidebar_state="auto",
 )
 
-API_URL     = "http://127.0.0.1:5000/api/predict"
-EXPLAIN_URL = "http://127.0.0.1:5000/api/explain"
+_flask_base = os.environ.get("FLASK_API_URL", "http://127.0.0.1:5000").rstrip("/")
+API_URL     = f"{_flask_base}/api/predict"
+EXPLAIN_URL = f"{_flask_base}/api/explain"
 
 
 # ─────────────────────────────────────────────────────────────────────────────

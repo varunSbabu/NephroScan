@@ -351,9 +351,20 @@ def internal_error(error):
 def serve_images(filename):
     return send_from_directory(os.path.join(os.path.dirname(__file__), 'images'), filename)
 
+# Auto-load models when imported by a production server (e.g. gunicorn).
+# The `if not models` guard prevents double-loading in local dev where
+# _start_flask_backend() already calls load_models() explicitly.
+if not models:
+    try:
+        load_models()
+    except Exception as _e:
+        logger.error(f"Auto load_models() failed: {_e}")
+
 if __name__ == '__main__':
     load_models()
-    app.run(host='127.0.0.1', port=5000, debug=False, use_reloader=False)
+    port = int(os.environ.get('PORT', 5000))
+    host = '0.0.0.0' if os.environ.get('RENDER') else '127.0.0.1'
+    app.run(host=host, port=port, debug=False, use_reloader=False)
 
 
 
