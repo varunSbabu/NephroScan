@@ -1,0 +1,9 @@
+Feature,FN_mean,FN_std,TP_mean,TP_std,p_value,Significant
+sc,,,4.352,6.793,,No
+hemo,,,11.067,2.235,,No
+sg,,,1.014,0.004,,No
+al,,,1.65,1.272,,No
+pcv,,,20.87,7.193,,No
+bgr,,,172.658,86.467,,No
+bu,,,71.805,57.389,,No
+age,,,54.053,17.344,,No

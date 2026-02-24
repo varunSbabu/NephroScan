@@ -1,0 +1,25 @@
+Feature,Clinical Name,LASSO_sel,RFE_sel,MI_sel,SHAP_sel,votes,consensus_rank,In Minimal Set
+sg,Urine Specific Gravity,✓,✓,✓,✓,4,1.5,Yes
+hemo,Haemoglobin (g/dl),✓,✓,✓,✓,4,1.5,Yes
+al,Albumin (urine),✓,✓,✓,✓,4,3.5,No
+rbc,Red Blood Cells (urine),✓,✓,✓,✓,4,4.0,No
+pcv,Packed Cell Volume (%),✓,✓,✓,✓,4,4.25,No
+htn,Hypertension,✓,✓,✓,✓,4,5.5,No
+dm,Diabetes Mellitus,✓,✓,✗,✓,3,6.0,No
+sc,Serum Creatinine (mg/dl),✗,✓,✓,✓,3,6.875,No
+sod,Sodium (mEq/L),✓,✓,✓,✗,3,8.0,No
+bu,Blood Urea (mg/dl),✓,✓,✗,✗,2,8.75,No
+rc,Red Blood Cell Count (millions/cmm),✗,✓,✓,✗,2,8.875,No
+appet,Appetite,✓,✓,✗,✗,2,9.0,No
+su,Sugar (urine),✓,✓,✗,✗,2,11.0,No
+bgr,Blood Glucose Random (mg/dl),✗,✓,✗,✗,1,11.375,No
+pc,Pus Cells,✗,✓,✗,✗,1,12.125,No
+bp,Blood Pressure (mm/Hg),✗,✓,✗,✗,1,12.125,No
+pot,Potassium (mEq/L),✗,✓,✗,✗,1,12.875,No
+wc,White Blood Cell Count (/cumm),✓,✓,✗,✗,2,13.25,No
+pe,Pedal Edema,✗,✓,✗,✗,1,13.375,No
+ba,Bacteria,✓,✗,✗,✗,1,15.0,No
+ane,Anaemia,✗,✗,✗,✗,0,15.625,No
+age,Patient Age,✗,✓,✗,✗,1,15.875,No
+cad,Coronary Artery Disease,✓,✗,✗,✗,1,16.5,No
+pcc,Pus Cell Clumps,✗,✗,✗,✗,0,16.625,No

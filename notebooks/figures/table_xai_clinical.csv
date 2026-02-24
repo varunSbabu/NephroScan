@@ -1,0 +1,25 @@
+Rank,Feature,Clinical Name,RF SHAP (CKD pts),RF Mean |SHAP|,Cross-Model Imp.,Direction,Clinical Rationale
+1,al,Albumin,0.14143,0.15177,1.05243,↑ raises CKD risk,Albumin in urine indicates glomerular damage
+2,sc,Serum Creatinine,0.08086,0.08755,1.09419,↑ raises CKD risk,Waste product; elevated when kidneys fail
+3,hemo,Haemoglobin,-0.08271,0.08554,2.19674,↓ lowers CKD risk,Anaemia common in CKD; low Hb is a marker
+4,sg,Sp. Gravity,-0.05726,0.06156,1.13574,↓ lowers CKD risk,Kidney concentrating ability decreases in CKD
+5,bgr,Blood Glucose,0.04167,0.04507,0.43518,↑ raises CKD risk,Diabetes is the leading cause of CKD
+6,pcv,PCV,-0.04175,0.04415,0.73791,↓ lowers CKD risk,Packed cell volume reduced in CKD anaemia
+7,rc,RBC Count,-0.03924,0.03942,0.58185,↓ lowers CKD risk,RBC count falls with renal anaemia
+8,htn,Hypertension,0.02891,0.03546,0.22657,↑ raises CKD risk,Hypertension causes and accelerates CKD
+9,dm,Diabetes,0.0274,0.02682,0.37434,↑ raises CKD risk,Diabetic nephropathy is a primary CKD cause
+10,rbc,RBC (urine),0.00583,0.02644,0.71812,↑ raises CKD risk,RBC casts in urine signal glomerulonephritis
+11,bp,Blood Pressure,0.01826,0.02053,0.1484,↑ raises CKD risk,Elevated BP associated with CKD progression
+12,sod,Sodium,-0.02088,0.01997,0.25725,↓ lowers CKD risk,Sodium imbalance in advanced CKD (hyponatraemia)
+13,bu,Blood Urea,0.00968,0.01057,0.17279,↑ raises CKD risk,Urea retention is a hallmark of renal failure
+14,su,Sugar,0.00854,0.00773,0.06124,↑ raises CKD risk,Glucosuria in diabetic nephropathy
+15,wc,WBC Count,-0.0084,0.00755,0.20705,variable,Elevated in infection/inflammation; indirect
+16,appet,Appetite,0.0084,0.00722,0.12959,↓ lowers CKD risk,Poor appetite is a symptom of uraemia
+17,pe,Pedal Edema,0.00593,0.00559,0.21245,↑ raises CKD risk,Oedema from fluid retention in CKD
+18,pot,Potassium,-0.00359,0.00379,0.14581,↑ raises CKD risk,Hyperkalaemia occurs as GFR declines
+19,pc,Pus Cells,0.00134,0.00293,0.03318,↑ raises CKD risk,Pus cells indicate infection / inflammation
+20,age,Age,-0.00084,0.00094,0.08419,↑ raises CKD risk,Older age is an independent risk factor
+21,ane,Anaemia,0.00051,0.00068,0.10186,↑ raises CKD risk,Renal anaemia results from EPO deficiency
+22,pcc,Pus Cell Clumps,-3e-05,5e-05,0.02586,↑ raises CKD risk,Pus cell clumps indicate UTI/renal infection
+23,ba,Bacteria,0.0,0.0,0.01353,↑ raises CKD risk,Bacteriuria associated with renal infection
+24,cad,Cor. Artery Dis.,0.0,0.0,0.0046,↑ raises CKD risk,Cardiovascular disease co-morbid with CKD

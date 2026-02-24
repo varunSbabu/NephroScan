@@ -1,0 +1,6 @@
+Model,Default_AUC,Tuned_AUC,AUC_Gain,Default_F1,Tuned_F1,F1_Gain,Best_AUC_trial,N_trials,Best_Params
+Random Forest,0.99924,0.99929,4e-05,0.99477,0.99412,-0.00065,0.9996,100,"{'n_estimators': 500, 'max_depth': 13, 'min_samples_split': 6, 'min_samples_leaf': 4, 'max_features': 'log2', 'bootstrap': False}"
+XGBoost,0.99884,0.99911,0.00027,0.98789,0.99064,0.00275,0.9996,100,"{'n_estimators': 500, 'max_depth': 12, 'learning_rate': 0.06459666959151401, 'subsample': 0.5780759504758056, 'colsample_bytree': 0.4164340115579366, 'reg_alpha': 7.091384614514681e-06, 'reg_lambda': 4.542000594752323e-07, 'min_child_weight': 1, 'gamma': 0.14116092632599253}"
+CatBoost,0.99902,0.99849,-0.00053,0.99276,0.99137,-0.00139,0.99987,100,"{'iterations': 450, 'depth': 6, 'learning_rate': 0.1609622008593327, 'l2_leaf_reg': 8.633510315081903, 'bagging_temperature': 0.389815560236714, 'border_count': 107}"
+Grad. Boosting,0.99858,0.99956,0.00098,0.98865,0.9927,0.00405,1.0,100,"{'n_estimators': 400, 'max_depth': 2, 'learning_rate': 0.279566426909896, 'subsample': 0.5033903904854609, 'min_samples_leaf': 20, 'max_features': None}"
+SVM,0.99929,0.99947,0.00018,0.98718,0.98865,0.00147,0.99947,100,"{'kernel': 'rbf', 'C': 233.86439256208715, 'gamma': 0.038672288491177424}"

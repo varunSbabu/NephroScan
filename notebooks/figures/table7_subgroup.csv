@@ -1,0 +1,28 @@
+Subgroup,Model,N,CKD_prev,Accuracy,Recall,F1,AUC
+Age < 40,Random Forest,90,0.433,1.0,1.0,1.0,1.0
+Age < 40,XGBoost,90,0.433,1.0,1.0,1.0,1.0
+Age < 40,CatBoost,90,0.433,1.0,1.0,1.0,1.0
+Age 40–60,Random Forest,178,0.607,0.9944,1.0,0.9954,1.0
+Age 40–60,XGBoost,178,0.607,1.0,1.0,1.0,1.0
+Age 40–60,CatBoost,178,0.607,1.0,1.0,1.0,1.0
+Age > 60,Random Forest,132,0.78,0.9924,1.0,0.9952,1.0
+Age > 60,XGBoost,132,0.78,1.0,1.0,1.0,1.0
+Age > 60,CatBoost,132,0.78,1.0,1.0,1.0,1.0
+No Hypertension,Random Forest,253,0.407,0.9921,1.0,0.9904,1.0
+No Hypertension,XGBoost,253,0.407,1.0,1.0,1.0,1.0
+No Hypertension,CatBoost,253,0.407,1.0,1.0,1.0,1.0
+Diabetes,Random Forest,138,0.993,1.0,1.0,1.0,1.0
+Diabetes,XGBoost,138,0.993,1.0,1.0,1.0,1.0
+Diabetes,CatBoost,138,0.993,1.0,1.0,1.0,1.0
+No Diabetes,Random Forest,262,0.431,0.9924,1.0,0.9912,1.0
+No Diabetes,XGBoost,262,0.431,1.0,1.0,1.0,1.0
+No Diabetes,CatBoost,262,0.431,1.0,1.0,1.0,1.0
+eGFR G1–G2,Random Forest,204,0.284,0.9902,1.0,0.9831,1.0
+eGFR G1–G2,XGBoost,204,0.284,1.0,1.0,1.0,1.0
+eGFR G1–G2,CatBoost,204,0.284,1.0,1.0,1.0,1.0
+eGFR G3 (mod.),Random Forest,74,0.973,1.0,1.0,1.0,1.0
+eGFR G3 (mod.),XGBoost,74,0.973,1.0,1.0,1.0,1.0
+eGFR G3 (mod.),CatBoost,74,0.973,1.0,1.0,1.0,1.0
+eGFR G4–G5,Random Forest,122,0.984,1.0,1.0,1.0,1.0
+eGFR G4–G5,XGBoost,122,0.984,1.0,1.0,1.0,1.0
+eGFR G4–G5,CatBoost,122,0.984,1.0,1.0,1.0,1.0

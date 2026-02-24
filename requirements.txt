@@ -12,8 +12,6 @@ flask>=2.3.0
 gunicorn>=21.0.0
 
 # Frontend
-streamlit>=1.28.0
-streamlit-lottie>=0.0.5
 plotly>=5.18.0
 
 # Utilities

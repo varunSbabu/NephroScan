@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NephroScan — CKD Clinical Decision System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+</head>
+<body>
+
+<!-- ═══════════════════════════ LOGIN ═══════════════════════════════════════ -->
+<div id="view-login" class="view active">
+  <div class="login-bg">
+    <div class="login-particles" id="particles"></div>
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="logo-icon"><span>N</span></div>
+        <div>
+          <h1 class="login-title">NephroScan</h1>
+          <p class="login-subtitle">CKD Clinical Decision System</p>
+        </div>
+      </div>
+      <form id="login-form" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" id="login-username" class="form-control" placeholder="Enter username" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-icon-wrap">
+            <input type="password" id="login-password" class="form-control" placeholder="Enter password" required />
+            <button type="button" class="input-icon-btn" onclick="togglePwd()">👁</button>
+          </div>
+        </div>
+        <div id="login-error" class="alert alert-danger hidden">Invalid credentials. Please try again.</div>
+        <button type="submit" class="btn btn-primary btn-full btn-lg" id="login-btn">
+          <span class="btn-text">Sign In</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ APP SHELL ═══════════════════════════════════ -->
+<div id="app-shell" class="hidden">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="logo-icon sm"><span>N</span></div>
+        <span class="sidebar-brand">NephroScan</span>
+      </div>
+      <button class="sidebar-toggle" id="sidebar-toggle" title="Collapse">‹</button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-view="view-dashboard" onclick="navigate('view-dashboard'); return false;">
+        <span class="nav-icon">⊞</span><span class="nav-label">Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-view="view-assessment" onclick="navigate('view-patient-details'); return false;">
+        <span class="nav-icon">✚</span><span class="nav-label">New Assessment</span>
+      </a>
+      <a href="#" class="nav-item" data-view="view-patient-lookup" onclick="navigate('view-patient-lookup'); return false;">
+        <span class="nav-icon">⚲</span><span class="nav-label">Patient Lookup</span>
+      </a>
+      <a href="#" class="nav-item admin-only hidden" data-view="view-admin" onclick="navigate('view-admin'); return false;">
+        <span class="nav-icon">⚙</span><span class="nav-label">Admin Panel</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="theme-toggle" id="theme-toggle" title="Toggle theme">◑</button>
+
+      <!-- Profile trigger -->
+      <div class="profile-menu-wrap" id="profile-menu-wrap">
+        <div class="user-chip" id="user-chip" onclick="toggleProfileMenu()" title="Your profile">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <div class="user-info">
+            <span class="user-name" id="user-name-sidebar">Loading&hellip;</span>
+            <span class="user-role" id="user-role-sidebar">&mdash;</span>
+          </div>
+          <span class="profile-caret" id="profile-caret">&#x25B4;</span>
+        </div>
+
+        <!-- Popover dropdown (appears above the chip) -->
+        <div class="profile-popover hidden" id="profile-popover">
+          <div class="profile-popover-user">
+            <div class="profile-popover-avatar" id="profile-popover-avatar">?</div>
+            <div>
+              <div class="profile-popover-name" id="profile-popover-name">—</div>
+              <div class="profile-popover-role" id="profile-popover-role">—</div>
+            </div>
+          </div>
+          <hr class="profile-popover-divider" />
+          <button class="profile-popover-item" onclick="showAccountModal(); closeProfileMenu()">
+            <span>&#x270E;</span> Edit Profile &amp; Password
+          </button>
+          <button class="profile-popover-item danger" onclick="logout()">
+            <span>&#x2192;</span> Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main area -->
+  <main class="main-content" id="main-content">
+    <!-- Top-bar -->
+    <header class="topbar">
+      <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
+      <h2 class="page-title" id="page-title">Dashboard</h2>
+      <div class="topbar-actions">
+        <button class="btn btn-primary btn-sm" onclick="navigate('view-patient-details')">+ New Assessment</button>
+        <button class="topbar-avatar-btn" id="topbar-avatar-btn" onclick="showAccountModal()" title="My Account">
+          <span id="topbar-avatar-initials">?</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Views container -->
+    <div class="views-container">
+
+      <!-- ── DASHBOARD ─────────────────────────────────────────────────────── -->
+      <section id="view-dashboard" class="inner-view active">
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card" data-stat="total_patients">
+            <div class="stat-icon blue">👤</div>
+            <div class="stat-body">
+              <div class="stat-value" id="stat-patients">—</div>
+              <div class="stat-label">Total Patients</div>
+            </div>
+          </div>
+          <div class="stat-card" data-stat="total_predictions">
+            <div class="stat-icon teal">📋</div>
+            <div class="stat-body">
+              <div class="stat-value" id="stat-predictions">—</div>
+              <div class="stat-label">Total Assessments</div>
+            </div>
+          </div>
+          <div class="stat-card" data-stat="ckd_positive">
+            <div class="stat-icon red">⚠</div>
+            <div class="stat-body">
+              <div class="stat-value" id="stat-ckd">—</div>
+              <div class="stat-label">CKD Positive</div>
+            </div>
+          </div>
+          <div class="stat-card" data-stat="total_users">
+            <div class="stat-icon purple">🔑</div>
+            <div class="stat-body">
+              <div class="stat-value" id="stat-users">—</div>
+              <div class="stat-label">System Users</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-charts">
+          <div class="chart-card">
+            <h3 class="chart-title">CKD Detection Overview</h3>
+            <canvas id="chart-donut" height="220"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3 class="chart-title">Recent Patients</h3>
+            <div id="recent-patients-table" class="table-wrap">
+              <p class="muted-text">Loading…</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── PATIENT DETAILS (Step 1) ──────────────────────────────────────── -->
+      <section id="view-patient-details" class="inner-view">
+        <div class="wizard-header">
+          <div class="wizard-step active" data-step="1"><span class="step-num">1</span><span class="step-lbl">Patient Details</span></div>
+          <div class="wizard-line"></div>
+          <div class="wizard-step" data-step="2"><span class="step-num">2</span><span class="step-lbl">Medical Parameters</span></div>
+          <div class="wizard-line"></div>
+          <div class="wizard-step" data-step="3"><span class="step-num">3</span><span class="step-lbl">Results</span></div>
+        </div>
+
+        <div class="card form-card">
+          <h3 class="card-header-title">Patient Information</h3>
+          <form id="patient-details-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">First Name *</label>
+                <input type="text" name="first_name" class="form-control" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Last Name *</label>
+                <input type="text" name="last_name" class="form-control" required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Age *</label>
+                <input type="number" name="age" class="form-control" min="1" max="120" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Gender *</label>
+                <select name="gender" class="form-control" required>
+                  <option value="">Select…</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Date of Birth</label>
+                <input type="date" name="date_of_birth" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Contact Number</label>
+                <input type="text" name="contact_number" class="form-control" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Physician / Referring Doctor</label>
+              <input type="text" name="physician" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes</label>
+              <textarea name="notes" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-ghost" onclick="navigate('view-dashboard')">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save & Continue →</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ── MEDICAL PARAMETERS (Step 2) ──────────────────────────────────── -->
+      <section id="view-medical-params" class="inner-view">
+        <div class="wizard-header">
+          <div class="wizard-step done" data-step="1"><span class="step-num">✓</span><span class="step-lbl">Patient Details</span></div>
+          <div class="wizard-line done"></div>
+          <div class="wizard-step active" data-step="2"><span class="step-num">2</span><span class="step-lbl">Medical Parameters</span></div>
+          <div class="wizard-line"></div>
+          <div class="wizard-step" data-step="3"><span class="step-num">3</span><span class="step-lbl">Results</span></div>
+        </div>
+
+        <div class="params-patient-banner" id="params-patient-banner">Patient: —</div>
+
+        <form id="medical-params-form">
+          <!-- Vitals -->
+          <div class="params-section">
+            <h4 class="params-section-title">🩸 Vitals &amp; Urinalysis</h4>
+            <div class="params-grid">
+              <div class="param-field">
+                <label class="form-label">Age <span class="unit">(years)</span></label>
+                <input type="number" name="age" class="form-control" id="param-age" step="1" min="1" max="120" />
+              </div>
+              <div class="param-field">
+                <label class="form-label">Blood Pressure <span class="unit">(mm/Hg)</span></label>
+                <input type="number" name="bp" class="form-control" step="1" />
+              </div>
+              <div class="param-field">
+                <label class="form-label">Specific Gravity</label>
+                <select name="sg" class="form-control">
+                  <option value="">—</option>
+                  <option value="1.005">1.005</option>
+                  <option value="1.010">1.010</option>
+                  <option value="1.015">1.015</option>
+                  <option value="1.020">1.020</option>
+                  <option value="1.025">1.025</option>
+                </select>
+              </div>
+              <div class="param-field">
+                <label class="form-label">Albumin <span class="unit">(0–5)</span></label>
+                <select name="al" class="form-control">
+                  <option value="">—</option>
+                  <option value="0">0</option><option value="1">1</option>
+                  <option value="2">2</option><option value="3">3</option>
+                  <option value="4">4</option><option value="5">5</option>
+                </select>
+              </div>
+              <div class="param-field">
+                <label class="form-label">Sugar <span class="unit">(0–5)</span></label>
+                <select name="su" class="form-control">
+                  <option value="">—</option>
+                  <option value="0">0</option><option value="1">1</option>
+                  <option value="2">2</option><option value="3">3</option>
+                  <option value="4">4</option><option value="5">5</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Urine Microscopy -->
+          <div class="params-section">
+            <h4 class="params-section-title">🔬 Urine Microscopy</h4>
+            <div class="params-grid">
+              <div class="param-field">
+                <label class="form-label">Red Blood Cells</label>
+                <select name="rbc" class="form-control">
+                  <option value="">—</option>
+                  <option value="normal">Normal</option>
+                  <option value="abnormal">Abnormal</option>
+                </select>
+              </div>
+              <div class="param-field">
+                <label class="form-label">Pus Cells</label>
+                <select name="pc" class="form-control">
+                  <option value="">—</option>
+                  <option value="normal">Normal</option>
+                  <option value="abnormal">Abnormal</option>
+                </select>
+              </div>
+              <div class="param-field">
+                <label class="form-label">Pus Cell Clumps</label>
+                <select name="pcc" class="form-control">
+                  <option value="">—</option>
+                  <option value="present">Present</option>
+                  <option value="notpresent">Not Present</option>
+                </select>
+              </div>
+              <div class="param-field">
+                <label class="form-label">Bacteria</label>
+                <select name="ba" class="form-control">
+                  <option value="">—</option>
+                  <option value="present">Present</option>
+                  <option value="notpresent">Not Present</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Blood Chemistry -->
+          <div class="params-section">
+            <h4 class="params-section-title">🧪 Blood Chemistry</h4>
+            <div class="params-grid">
+              <div class="param-field">
+                <label class="form-label">Blood Glucose Random <span class="unit">(mgs/dl)</span></label>
+                <input type="number" name="bgr" class="form-control" step="0.1" />
+              </div>
+              <div class="param-field">
+                <label class="form-label">Blood Urea <span class="unit">(mgs/dl)</span></label>
+                <input type="number" name="bu" class="form-control" step="0.1" />
+              </div>
+              <div class="param-field">
+                <label class="form-label">Serum Creatinine <span class="unit">(mgs/dl)</span></label>
+                <input type="number" name="sc" class="form-control" step="0.01" id="param-sc" />
+              </div>
+              <div class="param-field">
+                <label class="form-label">Sodium <span class="unit">(mEq/L)</span></label>
+                <input type="number" name="sod" class="form-control" step="0.1" />
+              </div>
+              <div class="param-field">
+                <label class="form-label">Potassium <span class="unit">(mEq/L)</span></label>
+                <input type="number" name="pot" class="form-control" step="0.01" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Haematology -->
+          <div class="params-section">
+            <h4 class="params-section-title">🩺 Haematology</h4>
+            <div class="params-grid">
+              <div class="param-field">
+                <label class="form-label">Haemoglobin <span class="unit">(gms)</span></label>
+                <input type="number" name="hemo" class="form-control" step="0.1" />
+              </div>
+              <div class="param-field">
+                <label class="form-label">Packed Cell Volume <span class="unit">(%)</span></label>
+                <input type="number" name="pcv" class="form-control" step="0.1" />
+              </div>
+              <div class="param-field">
+                <label class="form-label">White Blood Cell Count <span class="unit">(cells/cumm)</span></label>
+                <input type="number" name="wc" class="form-control" step="1" />
+              </div>
+              <div class="param-field">
+                <label class="form-label">Red Blood Cell Count <span class="unit">(millions/cmm)</span></label>
+                <input type="number" name="rc" class="form-control" step="0.01" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Comorbidities -->
+          <div class="params-section">
+            <h4 class="params-section-title">⚕ Comorbidities &amp; Symptoms</h4>
+            <div class="params-grid">
+              <div class="param-field">
+                <label class="form-label">Hypertension</label>
+                <select name="htn" class="form-control">
+                  <option value="">—</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+              <div class="param-field">
+                <label class="form-label">Diabetes Mellitus</label>
+                <select name="dm" class="form-control">
+                  <option value="">—</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+              <div class="param-field">
+                <label class="form-label">Coronary Artery Disease</label>
+                <select name="cad" class="form-control">
+                  <option value="">—</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+              <div class="param-field">
+                <label class="form-label">Appetite</label>
+                <select name="appet" class="form-control">
+                  <option value="">—</option>
+                  <option value="good">Good</option>
+                  <option value="poor">Poor</option>
+                </select>
+              </div>
+              <div class="param-field">
+                <label class="form-label">Pedal Edema</label>
+                <select name="pe" class="form-control">
+                  <option value="">—</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+              <div class="param-field">
+                <label class="form-label">Anaemia</label>
+                <select name="ane" class="form-control">
+                  <option value="">—</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" onclick="navigate('view-patient-details')">← Back</button>
+            <button type="submit" class="btn btn-primary" id="run-analysis-btn">
+              <span class="btn-text">Run Analysis →</span>
+              <span class="btn-spinner hidden"></span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ── RESULTS (Step 3) ──────────────────────────────────────────────── -->
+      <section id="view-results" class="inner-view">
+        <div class="wizard-header">
+          <div class="wizard-step done" data-step="1"><span class="step-num">✓</span><span class="step-lbl">Patient Details</span></div>
+          <div class="wizard-line done"></div>
+          <div class="wizard-step done" data-step="2"><span class="step-num">✓</span><span class="step-lbl">Medical Parameters</span></div>
+          <div class="wizard-line done"></div>
+          <div class="wizard-step active" data-step="3"><span class="step-num">3</span><span class="step-lbl">Results</span></div>
+        </div>
+
+        <div id="results-content">
+          <!-- Filled by JS -->
+        </div>
+
+        <div class="form-actions" style="margin-top:2rem">
+          <button type="button" class="btn btn-ghost" onclick="navigate('view-dashboard')">← Dashboard</button>
+          <button type="button" class="btn btn-secondary" onclick="navigate('view-patient-details')">New Assessment</button>
+          <button type="button" class="btn btn-primary" id="generate-shap-btn" onclick="generateShap()">
+            <span class="btn-text">Generate SHAP Explanation</span>
+            <span class="btn-spinner hidden"></span>
+          </button>
+        </div>
+
+        <!-- ── SHAP XAI Section ───────────────────────────────────────────── -->
+        <div id="shap-section" class="hidden" style="margin-top:2.5rem">
+
+          <!-- ── Animated Banner Header ── -->
+          <div class="shap-xai-header">
+            <div class="shap-xai-icon-wrap">🧬</div>
+            <div>
+              <div class="shap-xai-badge">&#x26A1; AI Explainability &middot; SHAP</div>
+              <div class="shap-xai-title">Why this prediction? &mdash; Feature Impact Analysis</div>
+              <div class="shap-xai-sub">Select a model below to see exactly which clinical features drove the prediction and by how much.</div>
+            </div>
+          </div>
+
+          <!-- ── Model Selector Bar ── -->
+          <div class="shap-model-bar">
+            <label class="form-label" for="shap-model-select">🤖 Explain using model:</label>
+            <select id="shap-model-select" class="form-control" onchange="reRenderShap()"></select>
+            <button class="btn btn-primary" onclick="reRenderShap()">📊 Regenerate</button>
+          </div>
+
+          <!-- ── Plot 1: Feature Impact ── -->
+          <div class="shap-plot-card">
+            <div class="shap-card-header">
+              <span class="shap-card-num">1</span>
+              <div>
+                <div class="shap-card-title">📊 Feature Impact (SHAP Values)</div>
+                <div class="shap-card-desc">Each bar shows how strongly a feature pushes the prediction toward CKD (red) or away from it (blue). Longer bar = greater influence.</div>
+              </div>
+            </div>
+            <div id="shap-plot1" class="shap-plot-area" style="min-height:420px"></div>
+          </div>
+
+          <!-- ── Plot 2: Waterfall ── -->
+          <div class="shap-plot-card">
+            <div class="shap-card-header">
+              <span class="shap-card-num">2</span>
+              <div>
+                <div class="shap-card-title">🌊 Prediction Waterfall</div>
+                <div class="shap-card-desc">Starting from the model baseline, each bar cumulatively adds or subtracts from the final prediction score &mdash; the last bar is the total SHAP contribution.</div>
+              </div>
+            </div>
+            <div id="shap-plot2" class="shap-plot-area" style="min-height:360px"></div>
+          </div>
+
+          <!-- ── Plots 3 & 4 side by side ── -->
+          <div class="shap-2col">
+            <div class="shap-plot-card" style="margin-bottom:0">
+              <div class="shap-card-header">
+                <span class="shap-card-num">3</span>
+                <div>
+                  <div class="shap-card-title">⚖️ Risk vs Protective Balance</div>
+                  <div class="shap-card-desc">Proportion of total SHAP weight attributed to risk-increasing vs risk-reducing features.</div>
+                </div>
+              </div>
+              <div id="shap-plot3" class="shap-plot-area"></div>
+            </div>
+            <div class="shap-plot-card" style="margin-bottom:0">
+              <div class="shap-card-header">
+                <span class="shap-card-num">4</span>
+                <div>
+                  <div class="shap-card-title">🎯 Risk-o-Meter</div>
+                  <div class="shap-card-desc">Overall ensemble confidence mapped to a five-zone clinical risk scale.</div>
+                </div>
+              </div>
+              <div id="shap-plot4" class="shap-plot-area"></div>
+            </div>
+          </div>
+
+          <!-- ── Plot 5: Clinical Normal Ranges ── -->
+          <div class="shap-plot-card">
+            <div class="shap-card-header">
+              <span class="shap-card-num">5</span>
+              <div>
+                <div class="shap-card-title">🩺 Patient Values vs Clinical Normal Ranges</div>
+                <div class="shap-card-desc">Each bar shows the patient's deviation from the clinical normal range midpoint. Red bars exceed the normal boundary.</div>
+              </div>
+            </div>
+            <div id="shap-plot5" class="shap-plot-area" style="min-height:340px"></div>
+          </div>
+
+          <!-- Clinical Interpretation (filled by JS) -->
+          <div id="shap-clinical-card" class="shap-plot-card"></div>
+
+          <!-- Submitted Params (filled by JS) -->
+          <div id="shap-submitted-params" class="shap-plot-card"></div>
+
+          <!-- Action buttons -->
+          <div class="shap-action-row">
+            <button class="btn btn-primary" onclick="startReanalysis(STATE.currentPatient?.patient_id)">&#x21BA; Reassess Patient</button>
+            <button class="btn btn-secondary" onclick="navigate('view-patient-details')">&#x2b; New Assessment</button>
+            <button class="btn btn-ghost" onclick="navigate('view-dashboard')">&#x1f4ca; Dashboard</button>
+            <button class="btn btn-ghost" onclick="navigate('view-patient-lookup')">&#x1f4cb; Patient History</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── PATIENT LOOKUP ────────────────────────────────────────────────── -->
+      <section id="view-patient-lookup" class="inner-view">
+        <div class="search-bar-row">
+          <input type="text" id="patient-search" class="form-control search-input" placeholder="Search by name, ID, or physician…" oninput="filterPatients()" />
+          <button class="btn btn-primary" onclick="loadPatients()">Refresh</button>
+        </div>
+        <div id="patients-table-wrap" class="table-wrap">
+          <p class="muted-text">Loading…</p>
+        </div>
+      </section>
+
+      <!-- ── PATIENT PROFILE ───────────────────────────────────────────────── -->
+      <section id="view-patient-profile" class="inner-view">
+        <button class="btn btn-ghost btn-sm back-btn" onclick="navigate('view-patient-lookup')">← Back to Lookup</button>
+        <div id="patient-profile-content">Loading…</div>
+      </section>
+
+      <!-- ── ADMIN PANEL ───────────────────────────────────────────────────── -->
+      <section id="view-admin" class="inner-view admin-only hidden">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="tab-users" onclick="switchTab('tab-users', this)">Users</button>
+          <button class="tab-btn" data-tab="tab-patients-admin" onclick="switchTab('tab-patients-admin', this)">Patients</button>
+        </div>
+
+        <div id="tab-users" class="tab-panel active">
+          <div class="section-actions">
+            <button class="btn btn-primary btn-sm" onclick="showAddUserModal()">+ Add User</button>
+          </div>
+          <div id="users-table-wrap" class="table-wrap">Loading…</div>
+        </div>
+
+        <div id="tab-patients-admin" class="tab-panel hidden">
+          <div id="patients-admin-table-wrap" class="table-wrap">Loading…</div>
+        </div>
+      </section>
+
+    </div><!-- /views-container -->
+  </main>
+</div><!-- /app-shell -->
+
+<!-- ═══════════ MODALS ════════════════════════════════════════════════════ -->
+
+<!-- Account Modal -->
+<div id="modal-account" class="modal-overlay hidden" onclick="closeModal('modal-account')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>My Account</h3>
+      <button class="modal-close" onclick="closeModal('modal-account')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p><strong>Username:</strong> <span id="acc-username">—</span></p>
+      <p><strong>Full Name:</strong> <span id="acc-fullname">—</span></p>
+      <p><strong>Role:</strong> <span id="acc-role">—</span></p>
+      <p><strong>Email:</strong> <span id="acc-email">—</span></p>
+      <hr />
+      <h4>Change Password</h4>
+      <div class="form-group">
+        <label class="form-label">Current Password</label>
+        <input type="password" id="old-pwd" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">New Password</label>
+        <input type="password" id="new-pwd" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm New Password</label>
+        <input type="password" id="confirm-pwd" class="form-control" />
+      </div>
+      <div id="pwd-message" class="alert hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-account')">Close</button>
+      <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div id="modal-add-user" class="modal-overlay hidden" onclick="closeModal('modal-add-user')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="modal-user-title">Add User</h3>
+      <button class="modal-close" onclick="closeModal('modal-add-user')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Username</label><input type="text" id="nu-username" class="form-control" /></div>
+      <div class="form-group"><label class="form-label">Full Name</label><input type="text" id="nu-fullname" class="form-control" /></div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" id="nu-email" class="form-control" /></div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select id="nu-role" class="form-control">
+          <option value="doctor">Doctor</option>
+          <option value="nurse">Nurse</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="form-group" id="nu-pwd-wrap"><label class="form-label">Password</label><input type="password" id="nu-password" class="form-control" /></div>
+      <div id="user-msg" class="alert hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-user')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Patient Edit Modal -->
+<div id="modal-patient-edit" class="modal-overlay hidden" onclick="closeModal('modal-patient-edit')">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Edit Patient</h3>
+      <button class="modal-close" onclick="closeModal('modal-patient-edit')">✕</button>
+    </div>
+    <div class="modal-body" id="patient-edit-body">Loading…</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-patient-edit')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePatientEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
