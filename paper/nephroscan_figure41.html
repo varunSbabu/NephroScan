@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>NephroScan — Figure 4.1 System Architecture</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#f4f6f9;
+    font-family:'Segoe UI',Arial,sans-serif;
+    display:flex;flex-direction:column;align-items:center;
+    padding:40px 20px 60px;
+    min-height:100vh;
+  }
+
+  /* ── Page title ── */
+  .page-title{
+    font-size:22px;font-weight:700;color:#1a1a2e;
+    margin-bottom:4px;text-align:center;
+  }
+  .page-sub{font-size:13px;color:#555;margin-bottom:30px;text-align:center}
+
+  /* ── Outer diagram card ── */
+  .diagram-card{
+    background:#fff;
+    border-radius:16px;
+    padding:40px 50px 50px;
+    box-shadow:0 8px 40px rgba(0,0,0,.13);
+    max-width:900px;width:100%;
+  }
+
+  /* ── Grid layout ── */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:0;
+    position:relative;
+  }
+
+  /* ── Cell: each flowchart step ── */
+  .cell{
+    display:flex;flex-direction:column;
+    align-items:center;
+    padding:10px 8px 18px;
+    position:relative;
+  }
+
+  /* ── Bubble label (floating above box) ── */
+  .bubble{
+    background:#fff;
+    border:2px solid #444;
+    border-radius:20px;
+    padding:4px 16px;
+    font-size:11.5px;font-weight:700;color:#222;
+    white-space:nowrap;
+    margin-bottom:-12px;
+    z-index:2;position:relative;
+    box-shadow:0 2px 6px rgba(0,0,0,.1);
+  }
+
+  /* ── Main content box ── */
+  .box{
+    border-radius:10px;
+    border:2.5px solid #555;
+    padding:14px 10px 12px;
+    width:100%;min-height:100px;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:6px;text-align:center;
+    position:relative;z-index:1;
+    box-shadow:0 3px 12px rgba(0,0,0,.12);
+  }
+
+  .box-icon{font-size:32px;line-height:1;margin-bottom:2px}
+  .box-title{font-size:12px;font-weight:700;line-height:1.3;color:#fff}
+  .box-sub{font-size:10px;color:rgba(255,255,255,.85);line-height:1.4}
+
+  /* Colour themes */
+  .theme-blue   {background:linear-gradient(145deg,#1565c0,#1976d2);border-color:#0d47a1}
+  .theme-teal   {background:linear-gradient(145deg,#00695c,#00897b);border-color:#004d40}
+  .theme-orange {background:linear-gradient(145deg,#e65100,#f57c00);border-color:#bf360c}
+  .theme-purple {background:linear-gradient(145deg,#4527a0,#5e35b1);border-color:#311b92}
+  .theme-green  {background:linear-gradient(145deg,#2e7d32,#388e3c);border-color:#1b5e20}
+  .theme-indigo {background:linear-gradient(145deg,#283593,#3949ab);border-color:#1a237e}
+  .theme-red    {background:linear-gradient(145deg,#b71c1c,#c62828);border-color:#7f0000}
+  .theme-cyan   {background:linear-gradient(145deg,#006064,#00838f);border-color:#004d40}
+  .theme-darkblue{background:linear-gradient(145deg,#0d1b4b,#1a2a6c);border-color:#060d2e}
+
+  /* ── Inner sub-boxes (like the dual dataset box) ── */
+  .sub-boxes{display:flex;gap:6px;width:100%;justify-content:center;margin-top:4px}
+  .sub-box{
+    background:rgba(255,255,255,.18);
+    border:1.5px solid rgba(255,255,255,.5);
+    border-radius:6px;padding:5px 8px;
+    font-size:9.5px;color:#fff;font-weight:600;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    flex:1;
+  }
+  .sub-box-icon{font-size:16px}
+
+  /* ── Model pills row ── */
+  .pills{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:4px}
+  .pill{
+    background:rgba(255,255,255,.22);
+    border:1px solid rgba(255,255,255,.5);
+    border-radius:10px;padding:2px 7px;
+    font-size:9px;color:#fff;font-weight:700;
+  }
+
+  /* ── Metric chips ── */
+  .metrics{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:4px}
+  .metric{
+    background:rgba(255,255,255,.9);
+    border-radius:6px;padding:2px 6px;
+    font-size:9px;font-weight:700;
+    line-height:1.3;text-align:center;
+  }
+
+  /* ── SHAP bar mini ── */
+  .shap-bar{
+    width:90%;height:5px;background:rgba(255,255,255,.25);
+    border-radius:3px;overflow:hidden;margin:1px 0;
+  }
+  .shap-fill{height:100%;border-radius:3px;background:rgba(255,255,255,.85)}
+
+  /* ══════════════════════════════╗
+     ARROWS                        ║
+  ════════════════════════════════ */
+
+  /* Horizontal right arrow between cells */
+  .arrow-right{
+    position:absolute;top:50%;right:-22px;
+    transform:translateY(-50%);
+    z-index:10;
+  }
+  .arrow-down{
+    position:absolute;bottom:-26px;left:50%;
+    transform:translateX(-50%);
+    z-index:10;
+  }
+  .arrow-left{
+    position:absolute;top:50%;left:-22px;
+    transform:translateY(-50%);
+    z-index:10;
+  }
+  .arrow-up{
+    position:absolute;top:-26px;left:50%;
+    transform:translateX(-50%) rotate(180deg);
+    z-index:10;
+  }
+
+  .arr-svg{display:block}
+
+  /* Row separators */
+  .row-gap{height:40px;grid-column:1/-1}
+
+  /* ── Figure caption ── */
+  .fig-caption{
+    text-align:center;margin-top:28px;
+    font-size:14px;font-weight:700;color:#1a1a2e;
+  }
+  .fig-num{font-weight:900}
+
+  /* ── Legend ── */
+  .legend{
+    display:flex;flex-wrap:wrap;gap:12px;justify-content:center;
+    margin-top:20px;
+  }
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#444}
+  .legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+
+  /* Arrow SVGs */
+  svg.arr{overflow:visible}
+</style>
+</head>
+<body>
+
+<div class="page-title">NephroScan — Detailed Design</div>
+<p class="page-sub">Section 4.1 · System Architecture</p>
+
+<div class="diagram-card">
+
+<!-- ═══════════════════════════════════════════════════════
+     ROW 1:  Dataset Collection → Pre-Processing → EDA
+════════════════════════════════════════════════════════ -->
+<div style="display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;align-items:center;margin-bottom:0">
+
+  <!-- Cell 1: Dataset Collection -->
+  <div class="cell">
+    <div class="bubble">Dataset Collection</div>
+    <div class="box theme-blue">
+      <div class="box-icon">🗄️</div>
+      <div class="box-title">UCI CKD Dataset</div>
+      <div class="box-sub">Apollo Hospitals, India</div>
+      <div class="sub-boxes">
+        <div class="sub-box"><div class="sub-box-icon">👥</div><div>400 Records</div></div>
+        <div class="sub-box"><div class="sub-box-icon">📋</div><div>24 Features</div></div>
+      </div>
+      <div class="box-sub" style="margin-top:4px">CKD: 250 · Not-CKD: 150</div>
+    </div>
+  </div>
+
+  <!-- Arrow → -->
+  <div style="display:flex;align-items:center;justify-content:center;padding-top:22px">
+    <svg width="40" height="20" class="arr"><defs><marker id="a1" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#555"/></marker></defs><line x1="2" y1="10" x2="34" y2="10" stroke="#555" stroke-width="2.5" marker-end="url(#a1)"/></svg>
+  </div>
+
+  <!-- Cell 2: Data Pre-Processing -->
+  <div class="cell">
+    <div class="bubble">Data Pre-Processing</div>
+    <div class="box theme-teal">
+      <div class="box-icon">⚙️</div>
+      <div class="box-title">Handling Missing Values</div>
+      <div class="sub-boxes">
+        <div class="sub-box"><div class="sub-box-icon">💧</div><div>KNN Imputation<br/>k=5</div></div>
+        <div class="sub-box"><div class="sub-box-icon">🔤</div><div>Label<br/>Encoding</div></div>
+      </div>
+      <div style="margin-top:6px;width:90%;height:1px;background:rgba(255,255,255,.3)"></div>
+      <div class="box-sub">StandardScaler · z-score</div>
+      <div class="box-sub">Leakage-Free Pipeline ✓</div>
+    </div>
+  </div>
+
+  <!-- Arrow → -->
+  <div style="display:flex;align-items:center;justify-content:center;padding-top:22px">
+    <svg width="40" height="20" class="arr"><defs><marker id="a2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#555"/></marker></defs><line x1="2" y1="10" x2="34" y2="10" stroke="#555" stroke-width="2.5" marker-end="url(#a2)"/></svg>
+  </div>
+
+  <!-- Cell 3: EDA -->
+  <div class="cell">
+    <div class="bubble">Exploratory Analysis</div>
+    <div class="box theme-orange">
+      <div class="box-icon">📊</div>
+      <div class="box-title">EDA &amp; Statistical Analysis</div>
+      <div class="sub-boxes">
+        <div class="sub-box"><div class="sub-box-icon">📈</div><div>Distribution Plots</div></div>
+        <div class="sub-box"><div class="sub-box-icon">🔥</div><div>Correlation Heatmap</div></div>
+      </div>
+      <div class="box-sub" style="margin-top:4px">Outlier detection · Class analysis</div>
+      <div class="box-sub">01_data_analysis.ipynb</div>
+    </div>
+  </div>
+
+</div><!-- /row 1 -->
+
+<!-- Down arrow from col 3 -->
+<div style="display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;height:40px">
+  <div></div><div></div><div></div><div></div>
+  <div style="display:flex;justify-content:center;align-items:center">
+    <svg width="20" height="40" class="arr"><defs><marker id="a3" markerWidth="8" markerHeight="8" refX="3" refY="7" orient="auto"><polygon points="0 0,6 0,3 8" fill="#555"/></marker></defs><line x1="10" y1="2" x2="10" y2="34" stroke="#555" stroke-width="2.5" marker-end="url(#a3)"/></svg>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ROW 2:  Feature Selection ← Consensus Result ← 7-Feature
+     (right to left flow: col3→col2→col1  then down from col1)
+════════════════════════════════════════════════════════════ -->
+<div style="display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;align-items:center;margin-bottom:0">
+
+  <!-- Cell: Leakage-Free CV Split -->
+  <div class="cell">
+    <div class="bubble">Dataset Splitting</div>
+    <div class="box theme-green">
+      <div class="box-icon">✂️</div>
+      <div class="box-title">10-Fold Stratified CV</div>
+      <div class="sub-boxes">
+        <div class="sub-box"><div class="sub-box-icon">🏋️</div><div>Training<br/>Folds ×9</div></div>
+        <div class="sub-box"><div class="sub-box-icon">🧪</div><div>Held-Out<br/>Test Fold</div></div>
+      </div>
+      <div class="box-sub" style="margin-top:4px">Imputer fitted on train only</div>
+      <div class="box-sub">Zero data leakage ✓</div>
+    </div>
+  </div>
+
+  <!-- Arrow ← (left) -->
+  <div style="display:flex;align-items:center;justify-content:center;padding-top:22px">
+    <svg width="40" height="20" class="arr"><defs><marker id="a4" markerWidth="8" markerHeight="8" refX="1" refY="3" orient="auto"><polygon points="8 0,0 3,8 6" fill="#555"/></marker></defs><line x1="38" y1="10" x2="4" y2="10" stroke="#555" stroke-width="2.5" marker-end="url(#a4)"/></svg>
+  </div>
+
+  <!-- Cell: Create Datasets -->
+  <div class="cell">
+    <div class="bubble">Create Different Dataset</div>
+    <div class="box theme-indigo">
+      <div class="box-icon">📂</div>
+      <div class="box-title">7-Feature Consensus Subset</div>
+      <div class="sub-boxes">
+        <div class="sub-box"><div class="sub-box-icon">📄</div><div>Full 24-<br/>Feature Set</div></div>
+        <div class="sub-box"><div class="sub-box-icon">🎯</div><div>7-Feature<br/>Optimal Set</div></div>
+      </div>
+      <div class="box-sub" style="margin-top:4px">AUC retained: 99.96%</div>
+    </div>
+  </div>
+
+  <!-- Arrow ← (left) -->
+  <div style="display:flex;align-items:center;justify-content:center;padding-top:22px">
+    <svg width="40" height="20" class="arr"><defs><marker id="a5" markerWidth="8" markerHeight="8" refX="1" refY="3" orient="auto"><polygon points="8 0,0 3,8 6" fill="#555"/></marker></defs><line x1="38" y1="10" x2="4" y2="10" stroke="#555" stroke-width="2.5" marker-end="url(#a5)"/></svg>
+  </div>
+
+  <!-- Cell: Feature Selection -->
+  <div class="cell">
+    <div class="bubble">Feature Selection</div>
+    <div class="box theme-purple">
+      <div class="box-icon">🎯</div>
+      <div class="box-title">Consensus Feature Selection</div>
+      <div class="sub-boxes">
+        <div class="sub-box"><div class="sub-box-icon">🔵</div><div>LASSO</div></div>
+        <div class="sub-box"><div class="sub-box-icon">🟠</div><div>RFE</div></div>
+        <div class="sub-box"><div class="sub-box-icon">🟢</div><div>Mut.Info</div></div>
+        <div class="sub-box"><div class="sub-box-icon">🟣</div><div>SHAP</div></div>
+      </div>
+      <div class="box-sub" style="margin-top:4px">≥3/4 votes → sg, hemo, al, rbc, pcv, htn, dm</div>
+    </div>
+  </div>
+
+</div><!-- /row 2 -->
+
+<!-- Down arrow from col 1 (left) -->
+<div style="display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;height:40px">
+  <div style="display:flex;justify-content:center;align-items:center">
+    <svg width="20" height="40" class="arr"><defs><marker id="a6" markerWidth="8" markerHeight="8" refX="3" refY="7" orient="auto"><polygon points="0 0,6 0,3 8" fill="#555"/></marker></defs><line x1="10" y1="2" x2="10" y2="34" stroke="#555" stroke-width="2.5" marker-end="url(#a6)"/></svg>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ROW 3:  Applied ML Algorithms → Bayesian HPO → Ensemble
+════════════════════════════════════════════════════════════ -->
+<div style="display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;align-items:center;margin-bottom:0">
+
+  <!-- Cell: Applied ML Algorithms -->
+  <div class="cell">
+    <div class="bubble">Applied Machine Learning Algorithms</div>
+    <div class="box theme-darkblue" style="min-height:130px">
+      <div class="box-icon">🤖</div>
+      <div class="box-title">9 Classifier Suite</div>
+      <div class="pills">
+        <span class="pill">LR</span>
+        <span class="pill">SVM</span>
+        <span class="pill">DT</span>
+        <span class="pill">RF</span>
+        <span class="pill">GB</span>
+        <span class="pill">XGB</span>
+        <span class="pill">CatBoost</span>
+        <span class="pill">KNN</span>
+        <span class="pill">NaïveBayes</span>
+      </div>
+      <div class="box-sub" style="margin-top:5px">10-fold leakage-free evaluation</div>
+      <div class="box-sub">sklearn Pipeline · src/model.py</div>
+    </div>
+  </div>
+
+  <!-- Arrow → -->
+  <div style="display:flex;align-items:center;justify-content:center;padding-top:22px">
+    <svg width="40" height="20" class="arr"><defs><marker id="a7" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#555"/></marker></defs><line x1="2" y1="10" x2="34" y2="10" stroke="#555" stroke-width="2.5" marker-end="url(#a7)"/></svg>
+  </div>
+
+  <!-- Cell: Bayesian HPO -->
+  <div class="cell">
+    <div class="bubble">Hyperparameter Optimisation</div>
+    <div class="box theme-cyan" style="min-height:130px">
+      <div class="box-icon">⚙️</div>
+      <div class="box-title">Bayesian HPO — Optuna</div>
+      <div class="sub-boxes">
+        <div class="sub-box"><div class="sub-box-icon">🔁</div><div>100 Trials<br/>per Model</div></div>
+        <div class="sub-box"><div class="sub-box-icon">📐</div><div>TPE<br/>Sampler</div></div>
+      </div>
+      <div class="box-sub" style="margin-top:4px">RF · XGB · CatBoost · GB · SVM</div>
+      <div class="box-sub">Objective: 5-fold CV AUC</div>
+      <div class="box-sub">GB gain: ΔAUC +0.00098</div>
+    </div>
+  </div>
+
+  <!-- Arrow → -->
+  <div style="display:flex;align-items:center;justify-content:center;padding-top:22px">
+    <svg width="40" height="20" class="arr"><defs><marker id="a8" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#555"/></marker></defs><line x1="2" y1="10" x2="34" y2="10" stroke="#555" stroke-width="2.5" marker-end="url(#a8)"/></svg>
+  </div>
+
+  <!-- Cell: Ensemble / Resulting Model -->
+  <div class="cell">
+    <div class="bubble">Resulting Model</div>
+    <div class="box theme-red" style="min-height:130px">
+      <div class="box-icon">🗳️</div>
+      <div class="box-title">9-Model Majority-Vote Ensemble</div>
+      <div class="metrics">
+        <div class="metric" style="color:#1b5e20">AUC 0.9997</div>
+        <div class="metric" style="color:#1b5e20">Acc 99.25%</div>
+        <div class="metric" style="color:#1b5e20">F₁ 0.994</div>
+        <div class="metric" style="color:#1b5e20">MCC 0.984</div>
+      </div>
+      <div class="box-sub" style="margin-top:5px">RF: FN=0 · LR/SVM: FP=0</div>
+      <div class="box-sub">≥5/9 votes → CKD verdict</div>
+    </div>
+  </div>
+
+</div><!-- /row 3 -->
+
+<!-- Down arrow from col 3 (right) -->
+<div style="display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;height:40px">
+  <div></div><div></div><div></div><div></div>
+  <div style="display:flex;justify-content:center;align-items:center">
+    <svg width="20" height="40" class="arr"><defs><marker id="a9" markerWidth="8" markerHeight="8" refX="3" refY="7" orient="auto"><polygon points="0 0,6 0,3 8" fill="#555"/></marker></defs><line x1="10" y1="2" x2="10" y2="34" stroke="#555" stroke-width="2.5" marker-end="url(#a9)"/></svg>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ROW 4 (bottom):  SHAP XAI ← Select Best Model ← Result Analysis
+     (right to left: cols 3,2,1)
+════════════════════════════════════════════════════════════ -->
+<div style="display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;align-items:center">
+
+  <!-- Cell: Result Analysis -->
+  <div class="cell">
+    <div class="bubble">Result Analysis</div>
+    <div class="box theme-teal" style="min-height:130px">
+      <div class="box-icon">📋</div>
+      <div class="box-title">KDIGO Clinical Validation</div>
+      <div class="sub-boxes">
+        <div class="sub-box"><div class="sub-box-icon">🏥</div><div>KDIGO<br/>G1–G5 Stages</div></div>
+        <div class="sub-box"><div class="sub-box-icon">📉</div><div>Decision<br/>Curve DCA</div></div>
+      </div>
+      <div class="box-sub" style="margin-top:4px">CKD-EPI 2021 eGFR equation</div>
+      <div class="box-sub">Subgroup: age · htn · dm</div>
+      <div class="box-sub">07_clinical_validation.ipynb</div>
+    </div>
+  </div>
+
+  <!-- Arrow ← -->
+  <div style="display:flex;align-items:center;justify-content:center;padding-top:22px">
+    <svg width="40" height="20" class="arr"><defs><marker id="a10" markerWidth="8" markerHeight="8" refX="1" refY="3" orient="auto"><polygon points="8 0,0 3,8 6" fill="#555"/></marker></defs><line x1="38" y1="10" x2="4" y2="10" stroke="#555" stroke-width="2.5" marker-end="url(#a10)"/></svg>
+  </div>
+
+  <!-- Cell: Select Best Model -->
+  <div class="cell">
+    <div class="bubble">Select Best Model</div>
+    <div class="box theme-orange" style="min-height:130px">
+      <div class="box-icon">🏆</div>
+      <div class="box-title">Model Evaluation &amp; Selection</div>
+      <div class="sub-boxes">
+        <div class="sub-box"><div class="sub-box-icon">📊</div><div>ROC<br/>Curves</div></div>
+        <div class="sub-box"><div class="sub-box-icon">🔢</div><div>Confusion<br/>Matrix</div></div>
+        <div class="sub-box"><div class="sub-box-icon">📦</div><div>Boxplot<br/>AUC</div></div>
+      </div>
+      <div class="box-sub" style="margin-top:4px">Wilcoxon signed-rank test</div>
+      <div class="box-sub">Bonferroni-corrected α=0.05</div>
+    </div>
+  </div>
+
+  <!-- Arrow ← -->
+  <div style="display:flex;align-items:center;justify-content:center;padding-top:22px">
+    <svg width="40" height="20" class="arr"><defs><marker id="a11" markerWidth="8" markerHeight="8" refX="1" refY="3" orient="auto"><polygon points="8 0,0 3,8 6" fill="#555"/></marker></defs><line x1="38" y1="10" x2="4" y2="10" stroke="#555" stroke-width="2.5" marker-end="url(#a11)"/></svg>
+  </div>
+
+  <!-- Cell: SHAP XAI -->
+  <div class="cell">
+    <div class="bubble">Explainability (XAI)</div>
+    <div class="box theme-purple" style="min-height:130px">
+      <div class="box-icon">🧠</div>
+      <div class="box-title">SHAP XAI Dashboard</div>
+      <!-- Mini SHAP bars -->
+      <div style="width:90%;margin-top:4px">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
+          <div style="font-size:8px;color:rgba(255,255,255,.8);width:22px;text-align:right">al</div>
+          <div class="shap-bar"><div class="shap-fill" style="width:95%"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
+          <div style="font-size:8px;color:rgba(255,255,255,.8);width:22px;text-align:right">sc</div>
+          <div class="shap-bar"><div class="shap-fill" style="width:58%"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
+          <div style="font-size:8px;color:rgba(255,255,255,.8);width:22px;text-align:right">hemo</div>
+          <div class="shap-bar"><div class="shap-fill" style="width:55%"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <div style="font-size:8px;color:rgba(255,255,255,.8);width:22px;text-align:right">sg</div>
+          <div class="shap-bar"><div class="shap-fill" style="width:40%"></div></div>
+        </div>
+      </div>
+      <div class="box-sub" style="margin-top:4px">Tree · Linear · Kernel Explainer</div>
+      <div class="box-sub">5 interactive Plotly charts</div>
+    </div>
+  </div>
+
+</div><!-- /row 4 -->
+
+<!-- ── Figure Caption ── -->
+<div class="fig-caption">
+  <span class="fig-num">Figure 4.1</span> — NephroScan System Architecture
+</div>
+
+<!-- ── Legend ── -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#1976d2"></div> Data Collection &amp; Splitting</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#00897b"></div> Pre-Processing &amp; Clinical Validation</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f57c00"></div> EDA &amp; Model Evaluation</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#5e35b1"></div> Feature Selection &amp; XAI</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#388e3c"></div> Dataset Splitting</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1a2a6c"></div> ML Algorithms</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#c62828"></div> Ensemble Model</div>
+</div>
+
+</div><!-- /diagram-card -->
+
+</body>
+</html>

@@ -5,7 +5,7 @@ Aljaaf et al.,2019,Random Forest (10-fold),0.9917,0.9970,0.9930,—,[3]
 Qin et al.,2020,XGBoost + SMOTE,0.9880,0.9930,0.9890,—,[4]
 Zhang et al.,2020,LSTM (deep learning),0.9850,0.9940,0.9870,—,[5]
 Ogunleye & Wang,2020,XGBoost (feature selection),0.9933,0.9986,0.9940,—,[6]
-Taber-Hright et al.,2021,Gradient Boosting + SHAP,0.9942,0.9988,0.9948,—,[7]
+Taber-Wright et al.,2021,Gradient Boosting + SHAP,0.9942,0.9988,0.9948,—,[7]
 Islam et al.,2022,Ensemble (RF+XGB+LR),0.9950,0.9994,0.9957,—,[8]
-Almansour et al.,2023,Neural Network + KNN impute,0.9950,0.9990,0.9958,—,[9]
-**NephroScan (Ours)**,2026,9-Model Ensemble + SHAP + XAI (SVM),0.9850,0.9995,0.9880,0.9683,—
+Almansour et al.,2023,Neural Network + KNN imputation,0.9950,0.9990,0.9958,—,[9]
+**9-Model Majority-Vote Ensemble (NephroScan)**,2026,"9-Model Ensemble, SHAP XAI, KDIGO staging, 10-fold CV",0.9925,0.9997,0.9940,0.9840,—

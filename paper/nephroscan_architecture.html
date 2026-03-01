@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NephroScan — System Architecture Diagram</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0d1117;
+      --bg2:         #161b22;
+      --bg3:         #21262d;
+      --border:      #30363d;
+      --border-glow: #58a6ff44;
+
+      --blue:        #58a6ff;
+      --green:       #3fb950;
+      --purple:      #a371f7;
+      --orange:      #f0883e;
+      --teal:        #39d353;
+      --pink:        #f778ba;
+      --yellow:      #d29922;
+      --red:         #f85149;
+      --cyan:        #56d364;
+
+      --txt:         #e6edf3;
+      --txt2:        #8b949e;
+      --txt3:        #6e7681;
+
+      --radius:      10px;
+      --radius-lg:   16px;
+      --shadow:      0 4px 24px rgba(0,0,0,0.5);
+      --shadow-glow: 0 0 20px rgba(88,166,255,0.15);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+      padding: 40px 24px;
+      min-height: 100vh;
+    }
+
+    /* ── Page Header ──────────────────────────────────────────────────────── */
+    .page-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .page-header .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #1f3a5f, #1f4f2f);
+      border: 1px solid var(--blue);
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+
+    .page-header h1 {
+      font-size: clamp(28px, 5vw, 46px);
+      font-weight: 800;
+      background: linear-gradient(135deg, #58a6ff 0%, #a371f7 50%, #f778ba 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--txt2);
+      font-size: 15px;
+      max-width: 640px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── Legend ───────────────────────────────────────────────────────────── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--txt2);
+    }
+
+    .legend-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Diagram Wrapper ──────────────────────────────────────────────────── */
+    .diagram {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* ── Section Row ──────────────────────────────────────────────────────── */
+    .arch-row {
+      display: grid;
+      gap: 4px;
+      align-items: stretch;
+      position: relative;
+    }
+
+    /* ── Connecting Arrow (between rows) ──────────────────────────────────── */
+    .arrow-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .arrow-down {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .arrow-line {
+      width: 2px;
+      height: 20px;
+      background: linear-gradient(180deg, var(--border), var(--blue));
+    }
+
+    .arrow-head {
+      width: 0;
+      height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 10px solid var(--blue);
+    }
+
+    .arrow-label {
+      font-size: 11px;
+      color: var(--txt3);
+      letter-spacing: 0.5px;
+      margin: 0 10px;
+      white-space: nowrap;
+    }
+
+    /* ── Layer Banner ─────────────────────────────────────────────────────── */
+    .layer-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      border-radius: var(--radius) var(--radius) 0 0;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .layer-body {
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      border: 1px solid var(--border);
+      border-top: none;
+      padding: 16px;
+      background: var(--bg2);
+    }
+
+    .layer-wrap {
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      margin-bottom: 0;
+    }
+
+    /* Layer colour variants */
+    .layer-data    .layer-banner { background: linear-gradient(90deg,#1a2a1a,#1a3a1a); color:#3fb950; border: 1px solid #3fb95044; border-bottom:none; }
+    .layer-data    .layer-body   { border-color:#3fb95033; }
+    .layer-data    .layer-wrap   { border-color:#3fb95033; }
+
+    .layer-research .layer-banner { background: linear-gradient(90deg,#1a1a2e,#131b2d); color:#58a6ff; border:1px solid #58a6ff44; border-bottom:none; }
+    .layer-research .layer-body   { border-color:#58a6ff22; }
+    .layer-research .layer-wrap   { border-color:#58a6ff33; }
+
+    .layer-models  .layer-banner { background: linear-gradient(90deg,#2a1a2e,#1e142e); color:#a371f7; border:1px solid #a371f744; border-bottom:none; }
+    .layer-models  .layer-body   { border-color:#a371f722; }
+    .layer-models  .layer-wrap   { border-color:#a371f733; }
+
+    .layer-backend .layer-banner { background: linear-gradient(90deg,#2e1a1a,#3a1a14); color:#f0883e; border:1px solid #f0883e44; border-bottom:none; }
+    .layer-backend .layer-body   { border-color:#f0883e22; }
+    .layer-backend .layer-wrap   { border-color:#f0883e33; }
+
+    .layer-frontend .layer-banner { background: linear-gradient(90deg,#2e1a2e,#3a1435); color:#f778ba; border:1px solid #f778ba44; border-bottom:none; }
+    .layer-frontend .layer-body   { border-color:#f778ba22; }
+    .layer-frontend .layer-wrap   { border-color:#f778ba33; }
+
+    .layer-deploy  .layer-banner { background: linear-gradient(90deg,#1a2a2a,#142e2e); color:#56d364; border:1px solid #56d36444; border-bottom:none; }
+    .layer-deploy  .layer-body   { border-color:#56d36422; }
+    .layer-deploy  .layer-wrap   { border-color:#56d36433; }
+
+    /* ── Card Base ────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      position: relative;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-title .icon {
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .card-body {
+      font-size: 12px;
+      color: var(--txt2);
+      line-height: 1.55;
+    }
+
+    .card-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin: 2px 2px 2px 0;
+    }
+
+    .card-stat {
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    /* ── Colour tints ─────────────────────────────────────────────────────── */
+    .blue   { color: var(--blue);   }
+    .green  { color: var(--green);  }
+    .purple { color: var(--purple); }
+    .orange { color: var(--orange); }
+    .pink   { color: var(--pink);   }
+    .teal   { color: var(--teal);   }
+    .yellow { color: var(--yellow); }
+    .red    { color: var(--red);    }
+    .cyan   { color: var(--cyan);   }
+
+    .tag-blue   { background:#1f3a5f; color:var(--blue);   border:1px solid #58a6ff44; }
+    .tag-green  { background:#1a3a1a; color:var(--green);  border:1px solid #3fb95044; }
+    .tag-purple { background:#2a1a3e; color:var(--purple); border:1px solid #a371f744; }
+    .tag-orange { background:#3a2010; color:var(--orange); border:1px solid #f0883e44; }
+    .tag-pink   { background:#3a1435; color:var(--pink);   border:1px solid #f778ba44; }
+    .tag-yellow { background:#3a2a10; color:var(--yellow); border:1px solid #d2992244; }
+    .tag-red    { background:#3a1414; color:var(--red);    border:1px solid #f8514944; }
+    .tag-teal   { background:#143a20; color:var(--teal);   border:1px solid #56d36444; }
+
+    .border-blue   { border-color: #58a6ff55 !important; }
+    .border-blue:hover   { border-color: var(--blue) !important; }
+    .border-green  { border-color: #3fb95055 !important; }
+    .border-green:hover  { border-color: var(--green) !important; }
+    .border-purple { border-color: #a371f755 !important; }
+    .border-purple:hover { border-color: var(--purple) !important; }
+    .border-orange { border-color: #f0883e55 !important; }
+    .border-orange:hover { border-color: var(--orange) !important; }
+    .border-pink   { border-color: #f778ba55 !important; }
+    .border-pink:hover   { border-color: var(--pink) !important; }
+    .border-yellow { border-color: #d2992255 !important; }
+    .border-yellow:hover { border-color: var(--yellow) !important; }
+    .border-teal   { border-color: #56d36455 !important; }
+    .border-teal:hover   { border-color: var(--teal) !important; }
+
+    /* ── Flex grids for cards ─────────────────────────────────────────────── */
+    .cards-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .cards-row .card { flex: 1; min-width: 160px; }
+
+    .cards-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .cards-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .cards-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .cards-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .cards-grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+    .cards-grid-7 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
+
+    @media (max-width: 1000px) {
+      .cards-grid-7, .cards-grid-6, .cards-grid-5 { grid-template-columns: repeat(3, 1fr); }
+      .cards-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .cards-grid-7, .cards-grid-6, .cards-grid-5,
+      .cards-grid-4, .cards-grid-3, .cards-grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* ── Phase badge ──────────────────────────────────────────────────────── */
+    .phase-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-right: 4px;
+    }
+
+    /* ── Sub-section heading ──────────────────────────────────────────────── */
+    .sub-heading {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--txt3);
+      margin-bottom: 8px;
+      margin-top: 4px;
+      padding-left: 4px;
+      border-left: 2px solid var(--border);
+    }
+
+    /* ── Pipeline flow inside research layer ─────────────────────────────── */
+    .pipeline-flow {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .pipeline-step {
+      flex: 1;
+      min-width: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .pipeline-node {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 10px;
+      text-align: center;
+      transition: border-color 0.2s, transform 0.15s;
+      cursor: default;
+    }
+
+    .pipeline-node:hover {
+      transform: translateY(-3px);
+    }
+
+    .pipeline-arrow {
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+      padding-top: 20px;
+      flex-shrink: 0;
+      color: var(--txt3);
+      font-size: 18px;
+    }
+
+    .pipeline-step-num {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--txt3);
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .pipeline-step-icon {
+      font-size: 22px;
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+
+    .pipeline-step-name {
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+
+    .pipeline-step-desc {
+      font-size: 10px;
+      color: var(--txt2);
+      line-height: 1.4;
+    }
+
+    /* ── Divider ──────────────────────────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 14px 0;
+    }
+
+    /* ── Model grid ───────────────────────────────────────────────────────── */
+    .model-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--txt2);
+      margin: 2px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .model-pill:hover { border-color: var(--purple); color: var(--purple); }
+
+    /* ── Metric badge ─────────────────────────────────────────────────────── */
+    .metric-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .metric-chip {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      text-align: center;
+      min-width: 70px;
+    }
+
+    .metric-chip .val {
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .metric-chip .lbl {
+      font-size: 9px;
+      color: var(--txt3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    /* ── API endpoint ─────────────────────────────────────────────────────── */
+    .endpoint {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin: 4px 0;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+    }
+
+    .method {
+      font-weight: 700;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .method-post { background:#1a3a1a; color:var(--green); }
+    .method-get  { background:#1f3a5f; color:var(--blue);  }
+
+    /* ── Feature list ─────────────────────────────────────────────────────── */
+    .feat-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    .feat-chip {
+      font-size: 10px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 7px;
+      color: var(--txt2);
+    }
+
+    /* ── Big stat number ──────────────────────────────────────────────────── */
+    .big-stat {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    /* ── Ensemble box ─────────────────────────────────────────────────────── */
+    .ensemble-box {
+      background: linear-gradient(135deg, #1a1a2e 0%, #2a1a3e 100%);
+      border: 2px solid #a371f766;
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ensemble-box::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, #a371f715, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Flow connector inside a card ───────────────────────────────────── */
+    .inline-arrow {
+      display: inline-flex;
+      align-items: center;
+      color: var(--txt3);
+      font-size: 14px;
+      padding: 0 4px;
+    }
+
+    /* ── SPA Screen cards ────────────────────────────────────────────────── */
+    .screen-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: transform 0.15s, border-color 0.2s;
+    }
+
+    .screen-card:hover { transform: translateY(-2px); border-color: var(--pink); }
+
+    .screen-bar {
+      background: var(--bg3);
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot { width:8px; height:8px; border-radius:50%; }
+    .dot-r { background:#f85149; }
+    .dot-y { background:#d29922; }
+    .dot-g { background:#3fb950; }
+
+    .screen-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--txt3);
+      margin-left: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    .screen-inner {
+      padding: 10px 12px;
+      font-size: 11px;
+      color: var(--txt2);
+      line-height: 1.5;
+    }
+
+    /* ── Deploy card ─────────────────────────────────────────────────────── */
+    .deploy-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 18px 14px;
+      gap: 6px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: transform 0.15s, border-color 0.2s;
+    }
+
+    .deploy-card:hover { transform: translateY(-2px); }
+
+    .deploy-icon { font-size: 28px; line-height: 1; }
+
+    /* ── Footer ──────────────────────────────────────────────────────────── */
+    .page-footer {
+      text-align: center;
+      margin-top: 52px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      color: var(--txt3);
+      font-size: 12px;
+    }
+
+    /* ── Print / export ───────────────────────────────────────────────────── */
+    @media print {
+      body { background: white; color: black; padding: 0; }
+      .card, .pipeline-node, .screen-card, .deploy-card { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!--  PAGE HEADER                                                           -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<header class="page-header">
+  <div class="badge">System Architecture</div>
+  <h1>NephroScan</h1>
+  <p>End-to-End Explainable ML Framework for Chronic Kidney Disease Detection &amp;
+     Clinical Decision Support</p>
+</header>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div> Data Layer</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div> Research / ML Pipeline</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#a371f7"></div> Model Artefacts</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div> Flask Backend API</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f778ba"></div> Frontend SPA</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#56d364"></div> Deployment</div>
+</div>
+
+<div class="diagram">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  LAYER 1 — DATA                                                        -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="layer-wrap layer-data">
+    <div class="layer-banner">
+      <span>📦</span> Layer 1 — Data Source
+    </div>
+    <div class="layer-body">
+      <div class="cards-grid-4">
+
+        <div class="card border-green">
+          <div class="card-title green"><span class="icon">🗄️</span> UCI CKD Dataset</div>
+          <div class="card-body">
+            <div class="big-stat green">400</div>
+            <div style="font-size:11px;margin-bottom:8px">Patient records</div>
+            <span class="card-tag tag-green">250 CKD (62.5%)</span>
+            <span class="card-tag tag-blue">150 Not-CKD (37.5%)</span>
+          </div>
+        </div>
+
+        <div class="card border-green">
+          <div class="card-title green"><span class="icon">🔢</span> Numerical Features (11)</div>
+          <div class="card-body">
+            <div class="feat-list">
+              <span class="feat-chip">age</span><span class="feat-chip">bp</span>
+              <span class="feat-chip">bgr</span><span class="feat-chip">bu</span>
+              <span class="feat-chip">sc</span><span class="feat-chip">sod</span>
+              <span class="feat-chip">pot</span><span class="feat-chip">hemo</span>
+              <span class="feat-chip">pcv</span><span class="feat-chip">wc</span>
+              <span class="feat-chip">rc</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-green">
+          <div class="card-title green"><span class="icon">🔤</span> Categorical Features (13)</div>
+          <div class="card-body">
+            <div class="feat-list">
+              <span class="feat-chip">sg</span><span class="feat-chip">al</span>
+              <span class="feat-chip">su</span><span class="feat-chip">rbc</span>
+              <span class="feat-chip">pc</span><span class="feat-chip">pcc</span>
+              <span class="feat-chip">ba</span><span class="feat-chip">htn</span>
+              <span class="feat-chip">dm</span><span class="feat-chip">cad</span>
+              <span class="feat-chip">appet</span><span class="feat-chip">pe</span>
+              <span class="feat-chip">ane</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-green">
+          <div class="card-title green"><span class="icon">⚠️</span> Missingness Profile</div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:11px">rbc (worst)</span>
+                <div style="flex:1;margin:0 8px;height:5px;background:#30363d;border-radius:3px;overflow:hidden">
+                  <div style="width:38.25%;height:100%;background:#f85149;border-radius:3px"></div></div>
+                <span style="font-size:10px;color:#f85149">38.25%</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:11px">pcv</span>
+                <div style="flex:1;margin:0 8px;height:5px;background:#30363d;border-radius:3px;overflow:hidden">
+                  <div style="width:17.5%;height:100%;background:#f0883e;border-radius:3px"></div></div>
+                <span style="font-size:10px;color:#f0883e">17.50%</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:11px">hemo</span>
+                <div style="flex:1;margin:0 8px;height:5px;background:#30363d;border-radius:3px;overflow:hidden">
+                  <div style="width:13.25%;height:100%;background:#d29922;border-radius:3px"></div></div>
+                <span style="font-size:10px;color:#d29922">13.25%</span>
+              </div>
+              <div style="font-size:10px;color:var(--txt3);margin-top:2px">16 of 24 features have missing values</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="arrow-row">
+    <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+    <span class="arrow-label">raw.csv → notebooks/</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  LAYER 2 — RESEARCH PIPELINE                                           -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="layer-wrap layer-research">
+    <div class="layer-banner">
+      <span>🔬</span> Layer 2 — Research &amp; ML Pipeline (notebooks/)
+    </div>
+    <div class="layer-body">
+
+      <!-- 7-Phase Pipeline Flow -->
+      <div class="sub-heading">Seven-Phase Pipeline</div>
+      <div class="pipeline-flow">
+
+        <div class="pipeline-step">
+          <div class="pipeline-node border-blue" style="border-color:#58a6ff66">
+            <div class="pipeline-step-num">Phase 1</div>
+            <div class="pipeline-step-icon">📊</div>
+            <div class="pipeline-step-name blue">EDA</div>
+            <div class="pipeline-step-desc">Distribution analysis<br>Correlation heatmap<br>Class imbalance check<br>01_data_analysis.ipynb</div>
+          </div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+
+        <div class="pipeline-step">
+          <div class="pipeline-node" style="border-color:#3fb95055">
+            <div class="pipeline-step-num">Phase 2</div>
+            <div class="pipeline-step-icon">🔧</div>
+            <div class="pipeline-step-name green">Imputation<br>Study</div>
+            <div class="pipeline-step-desc">Mean/Mode · KNN<br>MICE · Miss. Indicator<br>Leakage-free CV test<br>02_imputation.ipynb</div>
+          </div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+
+        <div class="pipeline-step">
+          <div class="pipeline-node" style="border-color:#a371f755">
+            <div class="pipeline-step-num">Phase 3</div>
+            <div class="pipeline-step-icon">🎯</div>
+            <div class="pipeline-step-name purple">Consensus<br>Feature Sel.</div>
+            <div class="pipeline-step-desc">LASSO · RFE<br>Mutual Info · SHAP<br>≥3/4 votes → 7 feats<br>03_feature_sel.ipynb</div>
+          </div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+
+        <div class="pipeline-step">
+          <div class="pipeline-node" style="border-color:#f0883e55">
+            <div class="pipeline-step-num">Phase 4</div>
+            <div class="pipeline-step-icon">🤖</div>
+            <div class="pipeline-step-name orange">Model<br>Training</div>
+            <div class="pipeline-step-desc">9 classifiers<br>10-fold strat. CV<br>Leakage-free pipeline<br>04_model_training.ipynb</div>
+          </div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+
+        <div class="pipeline-step">
+          <div class="pipeline-node" style="border-color:#d2992255">
+            <div class="pipeline-step-num">Phase 5</div>
+            <div class="pipeline-step-icon">⚙️</div>
+            <div class="pipeline-step-name yellow">Bayesian<br>HPO</div>
+            <div class="pipeline-step-desc">Optuna · 100 trials<br>TPE sampler<br>RF, XGB, CB, GB, SVM<br>05_hyperparameter.ipynb</div>
+          </div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+
+        <div class="pipeline-step">
+          <div class="pipeline-node" style="border-color:#f778ba55">
+            <div class="pipeline-step-num">Phase 6</div>
+            <div class="pipeline-step-icon">🧠</div>
+            <div class="pipeline-step-name pink">SHAP<br>XAI Analysis</div>
+            <div class="pipeline-step-desc">TreeExplainer<br>Beeswarm plots<br>Feature importance<br>06_xai_analysis.ipynb</div>
+          </div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+
+        <div class="pipeline-step">
+          <div class="pipeline-node" style="border-color:#56d36455">
+            <div class="pipeline-step-num">Phase 7</div>
+            <div class="pipeline-step-icon">🏥</div>
+            <div class="pipeline-step-name teal">Clinical<br>Validation</div>
+            <div class="pipeline-step-desc">KDIGO G1–G5 stages<br>CKD-EPI 2021 eGFR<br>DCA · Subgroup analysis<br>07_clinical_val.ipynb</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Imputation detail & Feature selection detail -->
+      <div class="cards-grid-3" style="margin-top:4px">
+
+        <div class="card border-green">
+          <div class="card-title green"><span class="icon">💧</span> Imputation Strategy (Selected: KNN k=5)</div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px">
+              <div style="background:var(--bg);border:1px solid #30363d;border-radius:6px;padding:6px;font-size:10px">
+                <div style="font-weight:700;margin-bottom:2px">A: Mean/Mode</div>
+                <div style="color:var(--txt3)">AUC 0.9987–1.000</div>
+                <span class="card-tag tag-yellow">Baseline</span>
+              </div>
+              <div style="background:var(--bg);border:1px solid #58a6ff44;border-radius:6px;padding:6px;font-size:10px">
+                <div style="font-weight:700;margin-bottom:2px;color:var(--blue)">B: KNN (k=5)</div>
+                <div style="color:var(--txt3)">AUC 0.9984–0.9997</div>
+                <span class="card-tag tag-blue">✓ Chosen</span>
+              </div>
+              <div style="background:var(--bg);border:1px solid #30363d;border-radius:6px;padding:6px;font-size:10px">
+                <div style="font-weight:700;margin-bottom:2px">C: MICE</div>
+                <div style="color:var(--txt3)">AUC 0.9981–0.9988</div>
+                <span class="card-tag tag-red">LR/GB diverge</span>
+              </div>
+              <div style="background:var(--bg);border:1px solid #3fb95044;border-radius:6px;padding:6px;font-size:10px">
+                <div style="font-weight:700;margin-bottom:2px;color:var(--teal)">D: Miss.Indicator</div>
+                <div style="color:var(--txt3)">AUC 1.000 all</div>
+                <span class="card-tag tag-teal">Sensitivity bd.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-purple">
+          <div class="card-title purple"><span class="icon">🎯</span> Consensus Feature Selection (7 of 24)</div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:3px;margin-top:4px">
+              <div style="display:grid;grid-template-columns:30px 40px 1fr 30px;font-size:10px;color:var(--txt3);padding:0 2px;margin-bottom:2px">
+                <span>Feat</span><span>Votes</span><span>Methods</span><span>Rank</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="display:grid;grid-template-columns:30px 40px 1fr 30px;background:var(--bg);border:1px solid #a371f733;border-radius:4px;padding:4px 6px;font-size:10px;align-items:center">
+                  <span class="feat-chip" style="font-size:9px">sg</span>
+                  <span style="color:var(--purple);font-weight:700">4/4</span>
+                  <span style="color:var(--txt2)">L · RFE · MI · SHAP</span>
+                  <span style="color:var(--purple)">#1</span>
+                </div>
+                <div style="display:grid;grid-template-columns:30px 40px 1fr 30px;background:var(--bg);border:1px solid #a371f733;border-radius:4px;padding:4px 6px;font-size:10px;align-items:center">
+                  <span class="feat-chip" style="font-size:9px">hemo</span>
+                  <span style="color:var(--purple);font-weight:700">4/4</span>
+                  <span style="color:var(--txt2)">L · RFE · MI · SHAP</span>
+                  <span style="color:var(--purple)">#2</span>
+                </div>
+                <div style="display:grid;grid-template-columns:30px 40px 1fr 30px;background:var(--bg);border:1px solid #a371f733;border-radius:4px;padding:4px 6px;font-size:10px;align-items:center">
+                  <span class="feat-chip" style="font-size:9px">al</span>
+                  <span style="color:var(--purple);font-weight:700">4/4</span>
+                  <span style="color:var(--txt2)">L · RFE · MI · SHAP</span>
+                  <span style="color:var(--purple)">#3</span>
+                </div>
+                <div style="display:grid;grid-template-columns:30px 40px 1fr 30px;background:var(--bg);border:1px solid #a371f733;border-radius:4px;padding:4px 6px;font-size:10px;align-items:center">
+                  <span class="feat-chip" style="font-size:9px">rbc</span>
+                  <span style="color:var(--purple);font-weight:700">4/4</span>
+                  <span style="color:var(--txt2)">L · RFE · MI · SHAP</span>
+                  <span style="color:var(--purple)">#4</span>
+                </div>
+                <div style="display:grid;grid-template-columns:30px 40px 1fr 30px;background:var(--bg);border:1px solid #a371f722;border-radius:4px;padding:4px 6px;font-size:10px;align-items:center">
+                  <span class="feat-chip" style="font-size:9px">dm</span>
+                  <span style="color:var(--txt2);font-weight:700">3/4</span>
+                  <span style="color:var(--txt3)">L · RFE · SHAP</span>
+                  <span style="color:var(--txt3)">#7</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-orange">
+          <div class="card-title orange"><span class="icon">⚙️</span> Bayesian HPO — Optuna Results</div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">
+              <div style="background:var(--bg);border:1px solid #30363d;border-radius:5px;padding:6px 8px;font-size:10px">
+                <span style="font-weight:700;color:var(--orange)">Random Forest</span>
+                <div style="color:var(--txt3);margin-top:1px">n_est=500 · depth=13 · bootstrap=False</div>
+              </div>
+              <div style="background:var(--bg);border:1px solid #30363d;border-radius:5px;padding:6px 8px;font-size:10px">
+                <span style="font-weight:700;color:var(--orange)">XGBoost</span>
+                <div style="color:var(--txt3);margin-top:1px">n_est=500 · depth=12 · lr=0.0646</div>
+              </div>
+              <div style="background:var(--bg);border:1px solid #30363d;border-radius:5px;padding:6px 8px;font-size:10px">
+                <span style="font-weight:700;color:var(--orange)">Gradient Boosting</span>
+                <div style="color:var(--txt3);margin-top:1px">n_est=400 · depth=2 · ΔAUC +0.00098</div>
+              </div>
+              <div style="background:var(--bg);border:1px solid #30363d;border-radius:5px;padding:6px 8px;font-size:10px">
+                <span style="font-weight:700;color:var(--orange)">SVM</span>
+                <div style="color:var(--txt3);margin-top:1px">C=233.86 · γ=0.0387 · RBF kernel</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="arrow-row">
+    <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+    <span class="arrow-label">trained models → pickle/json → models/</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  LAYER 3 — MODEL ARTEFACTS                                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="layer-wrap layer-models">
+    <div class="layer-banner">
+      <span>💾</span> Layer 3 — Model Artefacts (models/)
+    </div>
+    <div class="layer-body">
+
+      <!-- 9 classifier pills -->
+      <div class="sub-heading">9 Trained Classifiers</div>
+      <div class="cards-grid-3">
+
+        <div class="card border-purple">
+          <div class="card-title purple"><span class="icon">📦</span> Pre-trained Model Files</div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px">
+              <div class="model-pill">🔗 logistic_regression.pkl</div>
+              <div class="model-pill">🔴 svm.pkl</div>
+              <div class="model-pill">🌲 decision_tree.pkl</div>
+              <div class="model-pill">🌳 random_forest.pkl</div>
+              <div class="model-pill">📈 gradient_boosting.pkl</div>
+              <div class="model-pill">⚡ xgboost.json</div>
+              <div class="model-pill">🐱 catboost.pkl</div>
+              <div class="model-pill">👥 knn.pkl</div>
+              <div class="model-pill">🎲 naive_bayes.pkl</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-purple">
+          <div class="card-title purple"><span class="icon">🔄</span> Preprocessing Pipeline Files</div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
+              <div style="background:var(--bg);border:1px solid #a371f733;border-radius:5px;padding:7px 10px;font-size:11px">
+                <span style="font-weight:700;color:var(--purple);font-family:monospace">le_dict.pkl</span>
+                <div style="color:var(--txt3);font-size:10px;margin-top:2px">LabelEncoder per categorical feature</div>
+              </div>
+              <div style="background:var(--bg);border:1px solid #a371f733;border-radius:5px;padding:7px 10px;font-size:11px">
+                <span style="font-weight:700;color:var(--purple);font-family:monospace">knn_imputer.pkl</span>
+                <div style="color:var(--txt3);font-size:10px;margin-top:2px">KNNImputer(k=5) — 24 features</div>
+              </div>
+              <div style="background:var(--bg);border:1px solid #a371f733;border-radius:5px;padding:7px 10px;font-size:11px">
+                <span style="font-weight:700;color:var(--purple);font-family:monospace">scaler.pkl</span>
+                <div style="color:var(--txt3);font-size:10px;margin-top:2px">StandardScaler — fitted on train folds</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-purple">
+          <div class="card-title purple"><span class="icon">📊</span> Key Performance Metrics</div>
+          <div class="card-body">
+            <div class="metric-row">
+              <div class="metric-chip">
+                <div class="val purple">0.9997</div>
+                <div class="lbl">Best AUC (LR)</div>
+              </div>
+              <div class="metric-chip">
+                <div class="val green">99.25%</div>
+                <div class="lbl">Ensemble Acc</div>
+              </div>
+              <div class="metric-chip">
+                <div class="val blue">0.994</div>
+                <div class="lbl">F₁ Score</div>
+              </div>
+              <div class="metric-chip">
+                <div class="val orange">0.984</div>
+                <div class="lbl">MCC</div>
+              </div>
+              <div class="metric-chip">
+                <div class="val teal">FN=0</div>
+                <div class="lbl">RF (screening)</div>
+              </div>
+              <div class="metric-chip">
+                <div class="val pink">FP=0</div>
+                <div class="lbl">LR / SVM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="arrow-row">
+    <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+    <span class="arrow-label">pickle.load() at Flask startup</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  LAYER 4 — FLASK BACKEND                                               -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="layer-wrap layer-backend">
+    <div class="layer-banner">
+      <span>⚙️</span> Layer 4 — Flask Backend API (Frontend/app.py)
+    </div>
+    <div class="layer-body">
+      <div class="cards-grid-4">
+
+        <!-- Startup -->
+        <div class="card border-orange">
+          <div class="card-title orange"><span class="icon">🚀</span> Application Startup</div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:3px;margin-top:4px;font-size:11px">
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:14px">1️⃣</span>
+                <span>Load <code style="color:var(--orange)">le_dict.pkl</code> (13 encoders)</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:14px">2️⃣</span>
+                <span>Load <code style="color:var(--orange)">knn_imputer.pkl</code></span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:14px">3️⃣</span>
+                <span>Load <code style="color:var(--orange)">scaler.pkl</code></span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:14px">4️⃣</span>
+                <span>Load 9 model files into dict</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0">
+                <span style="font-size:14px">5️⃣</span>
+                <span>Serve SPA at <code style="color:var(--green)">/</code></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preprocessing pipeline -->
+        <div class="card border-orange">
+          <div class="card-title orange"><span class="icon">🔄</span> preprocess_features()</div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:3px;margin-top:4px">
+              <div style="background:var(--bg);border:1px solid #f0883e33;border-radius:5px;padding:6px 8px;font-size:11px;display:flex;align-items:center;gap:6px">
+                <span>📝</span><span>Parse form_data (24 fields)</span>
+              </div>
+              <div style="text-align:center;color:var(--txt3);font-size:12px">↓</div>
+              <div style="background:var(--bg);border:1px solid #f0883e33;border-radius:5px;padding:6px 8px;font-size:11px;display:flex;align-items:center;gap:6px">
+                <span>🔤</span><span>LabelEncoder (categorical cols)</span>
+              </div>
+              <div style="text-align:center;color:var(--txt3);font-size:12px">↓</div>
+              <div style="background:var(--bg);border:1px solid #f0883e33;border-radius:5px;padding:6px 8px;font-size:11px;display:flex;align-items:center;gap:6px">
+                <span>💧</span><span>KNNImputer.transform()</span>
+              </div>
+              <div style="text-align:center;color:var(--txt3);font-size:12px">↓</div>
+              <div style="background:var(--bg);border:1px solid #f0883e33;border-radius:5px;padding:6px 8px;font-size:11px;display:flex;align-items:center;gap:6px">
+                <span>⚖️</span><span>StandardScaler.transform()</span>
+              </div>
+              <div style="text-align:center;color:var(--txt3);font-size:12px">↓</div>
+              <div style="background:var(--bg);border:1px solid #3fb95044;border-radius:5px;padding:6px 8px;font-size:11px;display:flex;align-items:center;gap:6px">
+                <span>✅</span><span>numpy array (1 × 24) ready</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- API Endpoints -->
+        <div class="card border-orange">
+          <div class="card-title orange"><span class="icon">🌐</span> REST API Endpoints</div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">
+              <div class="endpoint"><span class="method method-get">GET</span> <span>/</span> SPA entry</div>
+              <div class="endpoint"><span class="method method-post">POST</span><span>/api/predict</span></div>
+              <div style="font-size:10px;color:var(--txt3);padding-left:12px;margin-bottom:2px">→ 9 models + ensemble vote</div>
+              <div class="endpoint"><span class="method method-post">POST</span><span>/api/explain</span></div>
+              <div style="font-size:10px;color:var(--txt3);padding-left:12px;margin-bottom:2px">→ SHAP values per model</div>
+              <div class="endpoint"><span class="method method-post">POST</span><span>/api/patients</span></div>
+              <div class="endpoint"><span class="method method-get">GET</span> <span>/api/patients</span></div>
+              <div class="endpoint"><span class="method method-get">GET</span> <span>/images/&lt;file&gt;</span></div>
+              <div class="endpoint"><span class="method method-get">GET</span> <span>/static/&lt;file&gt;</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SHAP Engine -->
+        <div class="card border-orange">
+          <div class="card-title orange"><span class="icon">🧠</span> SHAP Explainer Engine</div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">
+              <div style="background:var(--bg);border:1px solid #f0883e33;border-radius:5px;padding:7px 10px;font-size:11px">
+                <div style="font-weight:700;color:var(--teal)">TreeExplainer (fast, exact)</div>
+                <div style="color:var(--txt3);font-size:10px;margin-top:2px">RF · GB · DT · XGBoost · CatBoost</div>
+              </div>
+              <div style="background:var(--bg);border:1px solid #f0883e33;border-radius:5px;padding:7px 10px;font-size:11px">
+                <div style="font-weight:700;color:var(--blue)">LinearExplainer</div>
+                <div style="color:var(--txt3);font-size:10px;margin-top:2px">Logistic Regression</div>
+              </div>
+              <div style="background:var(--bg);border:1px solid #f0883e33;border-radius:5px;padding:7px 10px;font-size:11px">
+                <div style="font-weight:700;color:var(--yellow)">KernelExplainer (approx)</div>
+                <div style="color:var(--txt3);font-size:10px;margin-top:2px">SVM · KNN · Naïve Bayes</div>
+                <div style="color:var(--txt3);font-size:10px">nsamples=100</div>
+              </div>
+              <div style="font-size:10px;color:var(--txt3);margin-top:2px">→ Returns dict: feature → SHAP value per model</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Prediction + Ensemble row -->
+      <div class="divider"></div>
+      <div class="sub-heading">Prediction &amp; Ensemble Logic</div>
+
+      <div class="cards-grid-2">
+
+        <div class="card border-orange">
+          <div class="card-title orange"><span class="icon">⚡</span> Per-Model Inference (api_predict)</div>
+          <div class="card-body" style="font-size:11px">
+            For each of the 9 models in parallel:
+            <div style="margin:6px 0;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-family:monospace;font-size:10px;color:var(--txt2)">
+              prediction = model.predict(features)[0]<br>
+              proba = model.predict_proba(features)[0]<br>
+              confidence = max(proba) × 100
+            </div>
+            Returns: <code style="color:var(--orange)">{ CKD | Not CKD }</code> + confidence % per model
+          </div>
+        </div>
+
+        <div class="ensemble-box">
+          <div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🗳️ Majority-Vote Ensemble</div>
+          <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-bottom:10px">
+            <span class="model-pill">LR</span><span class="model-pill">SVM</span>
+            <span class="model-pill">DT</span><span class="model-pill">RF</span>
+            <span class="model-pill">GB</span><span class="model-pill">XGB</span>
+            <span class="model-pill">CB</span><span class="model-pill">KNN</span>
+            <span class="model-pill">NB</span>
+          </div>
+          <div style="font-size:11px;color:var(--txt2)">Threshold: ≥5 of 9 votes → <strong style="color:var(--red)">CKD</strong></div>
+          <div class="metric-row" style="justify-content:center;margin-top:8px">
+            <div class="metric-chip"><div class="val purple">99.25%</div><div class="lbl">Accuracy</div></div>
+            <div class="metric-chip"><div class="val purple">0.9940</div><div class="lbl">F₁</div></div>
+            <div class="metric-chip"><div class="val purple">0.984</div><div class="lbl">MCC</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="arrow-row">
+    <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+    <span class="arrow-label">JSON responses → Vanilla JS SPA</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  LAYER 5 — FRONTEND SPA                                                -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="layer-wrap layer-frontend">
+    <div class="layer-banner">
+      <span>🖥️</span> Layer 5 — Frontend Single-Page Application (Frontend/static/)
+    </div>
+    <div class="layer-body">
+
+      <div class="sub-heading">Application Workflow (User Journey)</div>
+
+      <!-- SPA screens as browser mockups -->
+      <div class="cards-grid-6">
+
+        <div class="screen-card">
+          <div class="screen-bar">
+            <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+            <span class="screen-title">Step 1</span>
+          </div>
+          <div class="screen-inner">
+            <div style="font-size:18px;text-align:center;margin-bottom:4px">🔐</div>
+            <div style="font-weight:700;font-size:11px;color:var(--pink);text-align:center;margin-bottom:4px">Login</div>
+            <div style="color:var(--txt3);font-size:10px;text-align:center">Role-based auth<br>Admin / Doctor / Nurse<br>Session + avatar</div>
+          </div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-bar">
+            <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+            <span class="screen-title">Step 2</span>
+          </div>
+          <div class="screen-inner">
+            <div style="font-size:18px;text-align:center;margin-bottom:4px">👤</div>
+            <div style="font-weight:700;font-size:11px;color:var(--pink);text-align:center;margin-bottom:4px">Patient</div>
+            <div style="color:var(--txt3);font-size:10px;text-align:center">Register / lookup<br>Name · Age · Gender<br>Patient history</div>
+          </div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-bar">
+            <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+            <span class="screen-title">Step 3</span>
+          </div>
+          <div class="screen-inner">
+            <div style="font-size:18px;text-align:center;margin-bottom:4px">🔬</div>
+            <div style="font-weight:700;font-size:11px;color:var(--pink);text-align:center;margin-bottom:4px">Input (24)</div>
+            <div style="color:var(--txt3);font-size:10px;text-align:center">3-step wizard<br>11 numerical<br>13 categorical</div>
+          </div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-bar">
+            <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+            <span class="screen-title">Step 4</span>
+          </div>
+          <div class="screen-inner">
+            <div style="font-size:18px;text-align:center;margin-bottom:4px">🤖</div>
+            <div style="font-weight:700;font-size:11px;color:var(--pink);text-align:center;margin-bottom:4px">Prediction</div>
+            <div style="color:var(--txt3);font-size:10px;text-align:center">9 models shown<br>Ensemble verdict<br>Confidence %</div>
+          </div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-bar">
+            <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+            <span class="screen-title">Step 5</span>
+          </div>
+          <div class="screen-inner">
+            <div style="font-size:18px;text-align:center;margin-bottom:4px">📊</div>
+            <div style="font-weight:700;font-size:11px;color:var(--pink);text-align:center;margin-bottom:4px">SHAP XAI</div>
+            <div style="color:var(--txt3);font-size:10px;text-align:center">5 interactive<br>Plotly charts<br>Risk drivers</div>
+          </div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-bar">
+            <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+            <span class="screen-title">Step 6</span>
+          </div>
+          <div class="screen-inner">
+            <div style="font-size:18px;text-align:center;margin-bottom:4px">🏥</div>
+            <div style="font-weight:700;font-size:11px;color:var(--pink);text-align:center;margin-bottom:4px">KDIGO Stage</div>
+            <div style="color:var(--txt3);font-size:10px;text-align:center">eGFR computed<br>G1–G5 staging<br>Clinical report</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- SHAP charts and tech detail -->
+      <div class="cards-grid-3">
+
+        <div class="card border-pink">
+          <div class="card-title pink"><span class="icon">📊</span> SHAP XAI Dashboard — 5 Plotly Charts</div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:3px;margin-top:4px;font-size:11px">
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">
+                <span style="background:#1f3a5f;color:var(--blue);width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">1</span>
+                <span><strong>Feature Impact</strong> — horizontal bar (top SHAP values)</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">
+                <span style="background:#2a1a3e;color:var(--purple);width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">2</span>
+                <span><strong>Waterfall</strong> — cumulative SHAP build-up</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">
+                <span style="background:#3a1435;color:var(--pink);width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">3</span>
+                <span><strong>Risk Balance</strong> — donut chart (risk vs protective)</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">
+                <span style="background:#3a1414;color:var(--red);width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">4</span>
+                <span><strong>Risk-o-Meter</strong> — 5-zone semicircle gauge</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0">
+                <span style="background:#143a20;color:var(--teal);width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">5</span>
+                <span><strong>Clinical Ranges</strong> — deviation vs normal reference</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-pink">
+          <div class="card-title pink"><span class="icon">🏥</span> KDIGO eGFR Clinical Staging</div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:3px;margin-top:4px">
+              <div style="font-size:10px;color:var(--txt3);margin-bottom:4px">eGFR via CKD-EPI 2021 sex-neutral equation</div>
+              <div style="display:grid;grid-template-columns:40px 1fr;gap:3px;font-size:10px">
+                <span style="background:#143a20;color:var(--teal);border-radius:4px;padding:3px 6px;text-align:center;font-weight:700">G1</span>
+                <span style="color:var(--txt2);display:flex;align-items:center">eGFR ≥ 90 — Normal/High</span>
+                <span style="background:#1f3a5f;color:var(--blue);border-radius:4px;padding:3px 6px;text-align:center;font-weight:700">G2</span>
+                <span style="color:var(--txt2);display:flex;align-items:center">eGFR 60–89 — Mild decrease</span>
+                <span style="background:#3a2a10;color:var(--yellow);border-radius:4px;padding:3px 6px;text-align:center;font-weight:700">G3a</span>
+                <span style="color:var(--txt2);display:flex;align-items:center">eGFR 45–59 — Mild-moderate</span>
+                <span style="background:#3a2010;color:var(--orange);border-radius:4px;padding:3px 6px;text-align:center;font-weight:700">G3b</span>
+                <span style="color:var(--txt2);display:flex;align-items:center">eGFR 30–44 — Moderate-severe</span>
+                <span style="background:#3a1414;color:var(--red);border-radius:4px;padding:3px 6px;text-align:center;font-weight:700">G4</span>
+                <span style="color:var(--txt2);display:flex;align-items:center">eGFR 15–29 — Severe</span>
+                <span style="background:#3a0a0a;color:#ff6b6b;border-radius:4px;padding:3px 6px;text-align:center;font-weight:700">G5</span>
+                <span style="color:var(--txt2);display:flex;align-items:center">eGFR &lt;15 — Kidney failure</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-pink">
+          <div class="card-title pink"><span class="icon">🛠️</span> Tech Stack</div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
+              <div>
+                <div class="sub-heading" style="margin-top:0;margin-bottom:4px">Backend</div>
+                <span class="card-tag tag-orange">Python 3.8+</span>
+                <span class="card-tag tag-orange">Flask 2.3+</span>
+                <span class="card-tag tag-orange">scikit-learn</span>
+                <span class="card-tag tag-orange">XGBoost · CatBoost</span>
+                <span class="card-tag tag-orange">SHAP</span>
+              </div>
+              <div>
+                <div class="sub-heading" style="margin-bottom:4px">Frontend</div>
+                <span class="card-tag tag-pink">Vanilla JS (ES6+)</span>
+                <span class="card-tag tag-pink">CSS3</span>
+                <span class="card-tag tag-pink">Plotly.js 2.32</span>
+                <span class="card-tag tag-pink">Chart.js 4.4</span>
+              </div>
+              <div>
+                <div class="sub-heading" style="margin-bottom:4px">Database</div>
+                <span class="card-tag tag-blue">SQLite (database.py)</span>
+                <span class="card-tag tag-blue">Patient sessions</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="arrow-row">
+    <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+    <span class="arrow-label">Docker container → cloud hosting</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  LAYER 6 — DEPLOYMENT                                                  -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="layer-wrap layer-deploy">
+    <div class="layer-banner">
+      <span>🚀</span> Layer 6 — Deployment &amp; Infrastructure
+    </div>
+    <div class="layer-body">
+      <div class="cards-grid-5">
+
+        <div class="deploy-card border-teal" style="border-color:#56d36455">
+          <div class="deploy-icon">🐳</div>
+          <div style="font-weight:700;font-size:12px;color:var(--teal)">Docker</div>
+          <div style="font-size:10px;color:var(--txt3);text-align:center;margin-top:4px">
+            python:3.11-slim<br>
+            libgomp1 (XGBoost)<br>
+            Port 8080<br>
+            Dockerfile
+          </div>
+        </div>
+
+        <div class="deploy-card" style="border-color:#56d36444">
+          <div class="deploy-icon">☁️</div>
+          <div style="font-weight:700;font-size:12px;color:var(--teal)">Render</div>
+          <div style="font-size:10px;color:var(--txt3);text-align:center;margin-top:4px">
+            render.yaml<br>
+            Web service<br>
+            Auto-deploy from git<br>
+            Free tier available
+          </div>
+        </div>
+
+        <div class="deploy-card" style="border-color:#56d36444">
+          <div class="deploy-icon">🌐</div>
+          <div style="font-weight:700;font-size:12px;color:var(--teal)">Flask Server</div>
+          <div style="font-size:10px;color:var(--txt3);text-align:center;margin-top:4px">
+            Host: 0.0.0.0<br>
+            Port: 8080<br>
+            FLASK_APP=Frontend/app.py<br>
+            Production WSGI ready
+          </div>
+        </div>
+
+        <div class="deploy-card" style="border-color:#56d36444">
+          <div class="deploy-icon">📦</div>
+          <div style="font-weight:700;font-size:12px;color:var(--teal)">Dependencies</div>
+          <div style="font-size:10px;color:var(--txt3);text-align:center;margin-top:4px">
+            requirements.txt<br>
+            pip install<br>
+            virtualenv / ckdenv<br>
+            Python 3.8+ / 3.12
+          </div>
+        </div>
+
+        <div class="deploy-card" style="border-color:#56d36444">
+          <div class="deploy-icon">🔒</div>
+          <div style="font-weight:700;font-size:12px;color:var(--teal)">Security</div>
+          <div style="font-size:10px;color:var(--txt3);text-align:center;margin-top:4px">
+            SECRET_KEY env var<br>
+            Session management<br>
+            Role-based access<br>
+            Apache 2.0 licence
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div><!-- /diagram -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!--  FOOTER                                                                 -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<footer class="page-footer">
+  <p>
+    <strong style="background:linear-gradient(135deg,#58a6ff,#a371f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">NephroScan</strong>
+    &nbsp;·&nbsp; Explainable ML for Chronic Kidney Disease Detection
+    &nbsp;·&nbsp; UCI CKD Dataset (n=400) &nbsp;·&nbsp; 9-Model Ensemble
+    &nbsp;·&nbsp; AUC 0.9997 &nbsp;·&nbsp; SHAP + KDIGO Clinical Validation
+  </p>
+  <p style="margin-top:6px;font-size:11px">
+    Architecture diagram generated for IEEE conference paper submission &nbsp;|&nbsp; Apache 2.0 Licence
+  </p>
+</footer>
+
+</body>
+</html>

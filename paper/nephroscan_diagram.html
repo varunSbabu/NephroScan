@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>NephroScan — System Architecture Diagram</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#0d1117;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    color:#e6edf3;
+    padding:32px 20px 48px;
+    min-height:100vh;
+  }
+  h1{
+    text-align:center;
+    font-size:clamp(22px,4vw,36px);
+    font-weight:800;
+    margin-bottom:6px;
+    background:linear-gradient(135deg,#58a6ff,#a371f7,#f778ba);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .subtitle{text-align:center;color:#8b949e;font-size:13px;margin-bottom:28px}
+  .wrap{overflow-x:auto;padding-bottom:8px}
+  svg{display:block;margin:0 auto}
+  /* tooltip */
+  .tt{
+    position:fixed;display:none;
+    background:#161b22;border:1px solid #30363d;
+    border-radius:8px;padding:8px 12px;
+    font-size:11px;color:#c9d1d9;
+    max-width:220px;line-height:1.5;
+    pointer-events:none;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.6)
+  }
+</style>
+</head>
+<body>
+<h1>NephroScan</h1>
+<p class="subtitle">End-to-End Explainable ML System for Chronic Kidney Disease Detection · System Architecture</p>
+
+<div class="wrap">
+<svg id="arch" xmlns="http://www.w3.org/2000/svg" width="1160" height="1080" viewBox="0 0 1160 1080">
+<defs>
+  <!-- Arrow markers -->
+  <marker id="arr-blue"  markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#58a6ff"/></marker>
+  <marker id="arr-green" markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#3fb950"/></marker>
+  <marker id="arr-purple"markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#a371f7"/></marker>
+  <marker id="arr-orange"markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#f0883e"/></marker>
+  <marker id="arr-pink"  markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#f778ba"/></marker>
+  <marker id="arr-teal"  markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#56d364"/></marker>
+  <marker id="arr-gray"  markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#6e7681"/></marker>
+
+  <!-- Layer gradients background fills -->
+  <linearGradient id="g-data"    x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0a1f0a"/><stop offset="100%" stop-color="#0d2b0d"/></linearGradient>
+  <linearGradient id="g-research"x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0a1020"/><stop offset="100%" stop-color="#0d1830"/></linearGradient>
+  <linearGradient id="g-models"  x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#150a20"/><stop offset="100%" stop-color="#1e1030"/></linearGradient>
+  <linearGradient id="g-backend" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#200a08"/><stop offset="100%" stop-color="#2e1208"/></linearGradient>
+  <linearGradient id="g-frontend"x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#200a18"/><stop offset="100%" stop-color="#2e1022"/></linearGradient>
+  <linearGradient id="g-deploy"  x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0a1e10"/><stop offset="100%" stop-color="#0d2818"/></linearGradient>
+
+  <!-- Node gradients -->
+  <linearGradient id="n-blue"  x1="0%"y1="0%"x2="0%"y2="100%"><stop offset="0%"stop-color="#1a3a5f"/><stop offset="100%"stop-color="#0d1f3a"/></linearGradient>
+  <linearGradient id="n-green" x1="0%"y1="0%"x2="0%"y2="100%"><stop offset="0%"stop-color="#1a3a1a"/><stop offset="100%"stop-color="#0d200d"/></linearGradient>
+  <linearGradient id="n-purple"x1="0%"y1="0%"x2="0%"y2="100%"><stop offset="0%"stop-color="#2a1a40"/><stop offset="100%"stop-color="#180d28"/></linearGradient>
+  <linearGradient id="n-orange"x1="0%"y1="0%"x2="0%"y2="100%"><stop offset="0%"stop-color="#3a1e08"/><stop offset="100%"stop-color="#220d04"/></linearGradient>
+  <linearGradient id="n-pink"  x1="0%"y1="0%"x2="0%"y2="100%"><stop offset="0%"stop-color="#3a0e22"/><stop offset="100%"stop-color="#220814"/></linearGradient>
+  <linearGradient id="n-teal"  x1="0%"y1="0%"x2="0%"y2="100%"><stop offset="0%"stop-color="#0e2e18"/><stop offset="100%"stop-color="#071a0d"/></linearGradient>
+  <linearGradient id="n-gray"  x1="0%"y1="0%"x2="0%"y2="100%"><stop offset="0%"stop-color="#1e2430"/><stop offset="100%"stop-color="#141820"/></linearGradient>
+
+  <!-- Glow filters -->
+  <filter id="glow-blue"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="glow-purple"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="shadow"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.5"/></filter>
+</defs>
+
+<!-- ══════════════════════════════════════════════╗
+     BACKGROUND LAYER BANDS                        ║
+══════════════════════════════════════════════════ -->
+
+<!-- Layer 1: Data -->
+<rect x="10" y="10" width="1140" height="118" rx="12" fill="url(#g-data)" stroke="#3fb95033" stroke-width="1.5"/>
+<text x="30" y="34" font-size="11" font-weight="700" fill="#3fb950" letter-spacing="1.5" text-transform="uppercase" font-family="monospace">LAYER 1 — DATA SOURCE</text>
+
+<!-- Layer 2: Research Pipeline -->
+<rect x="10" y="148" width="1140" height="290" rx="12" fill="url(#g-research)" stroke="#58a6ff33" stroke-width="1.5"/>
+<text x="30" y="172" font-size="11" font-weight="700" fill="#58a6ff" letter-spacing="1.5" font-family="monospace">LAYER 2 — RESEARCH &amp; ML PIPELINE  (notebooks/)</text>
+
+<!-- Layer 3: Models -->
+<rect x="10" y="458" width="1140" height="130" rx="12" fill="url(#g-models)" stroke="#a371f733" stroke-width="1.5"/>
+<text x="30" y="482" font-size="11" font-weight="700" fill="#a371f7" letter-spacing="1.5" font-family="monospace">LAYER 3 — MODEL ARTEFACTS  (models/)</text>
+
+<!-- Layer 4: Backend -->
+<rect x="10" y="608" width="1140" height="150" rx="12" fill="url(#g-backend)" stroke="#f0883e33" stroke-width="1.5"/>
+<text x="30" y="632" font-size="11" font-weight="700" fill="#f0883e" letter-spacing="1.5" font-family="monospace">LAYER 4 — FLASK BACKEND API  (Frontend/app.py)</text>
+
+<!-- Layer 5: Frontend -->
+<rect x="10" y="778" width="1140" height="148" rx="12" fill="url(#g-frontend)" stroke="#f778ba33" stroke-width="1.5"/>
+<text x="30" y="802" font-size="11" font-weight="700" fill="#f778ba" letter-spacing="1.5" font-family="monospace">LAYER 5 — FRONTEND SPA  (Frontend/static/)</text>
+
+<!-- Layer 6: Deploy -->
+<rect x="10" y="946" width="1140" height="120" rx="12" fill="url(#g-deploy)" stroke="#56d36433" stroke-width="1.5"/>
+<text x="30" y="970" font-size="11" font-weight="700" fill="#56d364" letter-spacing="1.5" font-family="monospace">LAYER 6 — DEPLOYMENT</text>
+
+
+<!-- ══════════════════════════════════════════════╗
+     LAYER 1 — DATA NODES                         ║
+══════════════════════════════════════════════════ -->
+
+<!-- UCI Dataset node -->
+<g class="node" data-tip="UCI CKD dataset · Apollo Hospitals, India · 400 patients · 24 features · Binary target: CKD (250) vs Not-CKD (150)">
+  <rect x="40" y="44" width="190" height="68" rx="8" fill="url(#n-green)" stroke="#3fb950" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="135" y="64" text-anchor="middle" font-size="20" fill="#3fb950">🗄️</text>
+  <text x="135" y="81" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">UCI CKD Dataset</text>
+  <text x="135" y="95" text-anchor="middle" font-size="10" fill="#8b949e">n=400 · 24 features</text>
+  <text x="135" y="107" text-anchor="middle" font-size="10" fill="#8b949e">raw.csv</text>
+</g>
+
+<!-- Missingness node -->
+<g class="node" data-tip="16 of 24 features have missing values. Worst: rbc 38.25%, pcv 17.5%, hemo 13.25%, al 11.5%, sg 11.75%">
+  <rect x="260" y="44" width="170" height="68" rx="8" fill="url(#n-gray)" stroke="#f8514944" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="345" y="64" text-anchor="middle" font-size="18" fill="#f85149">⚠️</text>
+  <text x="345" y="81" text-anchor="middle" font-size="12" font-weight="700" fill="#e6edf3">Missingness</text>
+  <text x="345" y="95" text-anchor="middle" font-size="10" fill="#8b949e">16/24 features affected</text>
+  <text x="345" y="107" text-anchor="middle" font-size="10" fill="#f85149">rbc: 38.25% worst</text>
+</g>
+
+<!-- 11 Numerical -->
+<g class="node" data-tip="11 numerical: age, bp, bgr, bu, sc, sod, pot, hemo, pcv, wc, rc">
+  <rect x="460" y="44" width="150" height="68" rx="8" fill="url(#n-blue)" stroke="#58a6ff44" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="535" y="64" text-anchor="middle" font-size="18" fill="#58a6ff">🔢</text>
+  <text x="535" y="81" text-anchor="middle" font-size="12" font-weight="700" fill="#58a6ff">Numerical</text>
+  <text x="535" y="95" text-anchor="middle" font-size="10" fill="#8b949e">11 features</text>
+  <text x="535" y="107" text-anchor="middle" font-size="10" fill="#8b949e">age,bp,bgr,bu,sc…</text>
+</g>
+
+<!-- 13 Categorical -->
+<g class="node" data-tip="13 categorical: sg, al, su, rbc, pc, pcc, ba, htn, dm, cad, appet, pe, ane">
+  <rect x="640" y="44" width="150" height="68" rx="8" fill="url(#n-blue)" stroke="#58a6ff44" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="715" y="64" text-anchor="middle" font-size="18" fill="#58a6ff">🔤</text>
+  <text x="715" y="81" text-anchor="middle" font-size="12" font-weight="700" fill="#58a6ff">Categorical</text>
+  <text x="715" y="95" text-anchor="middle" font-size="10" fill="#8b949e">13 features</text>
+  <text x="715" y="107" text-anchor="middle" font-size="10" fill="#8b949e">sg,al,rbc,htn,dm…</text>
+</g>
+
+<!-- Class balance -->
+<g class="node" data-tip="Class distribution: CKD = 250 (62.5%), Not-CKD = 150 (37.5%) — mild imbalance">
+  <rect x="820" y="44" width="160" height="68" rx="8" fill="url(#n-gray)" stroke="#30363d" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="900" y="64" text-anchor="middle" font-size="18" fill="#d29922">⚖️</text>
+  <text x="900" y="81" text-anchor="middle" font-size="12" font-weight="700" fill="#e6edf3">Class Balance</text>
+  <text x="900" y="95" text-anchor="middle" font-size="10" fill="#3fb950">CKD: 250 (62.5%)</text>
+  <text x="900" y="107" text-anchor="middle" font-size="10" fill="#58a6ff">Not-CKD: 150 (37.5%)</text>
+</g>
+
+
+<!-- ══════════════════════════════════════════════╗
+     MAIN VERTICAL ARROW: Data → Research         ║
+══════════════════════════════════════════════════ -->
+<line x1="580" y1="130" x2="580" y2="146" stroke="#3fb950" stroke-width="2" marker-end="url(#arr-green)"/>
+
+
+<!-- ══════════════════════════════════════════════╗
+     LAYER 2 — 7 PHASE PIPELINE NODES             ║
+══════════════════════════════════════════════════ -->
+
+<!-- Phase nodes row 1 (phases 1-4) -->
+<!-- Phase 1: EDA -->
+<g class="node" data-tip="Phase 1: EDA — Distribution analysis, correlation heatmap, class imbalance check. Notebook: 01_data_analysis.ipynb">
+  <rect x="28" y="185" width="138" height="90" rx="8" fill="url(#n-blue)" stroke="#58a6ff" stroke-width="1.5" filter="url(#shadow)"/>
+  <circle cx="97" cy="185" r="12" fill="#0d1117" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="97" y="190" text-anchor="middle" font-size="10" font-weight="800" fill="#58a6ff">P1</text>
+  <text x="97" y="208" text-anchor="middle" font-size="18">📊</text>
+  <text x="97" y="225" text-anchor="middle" font-size="11" font-weight="700" fill="#58a6ff">EDA</text>
+  <text x="97" y="240" text-anchor="middle" font-size="9" fill="#8b949e">Distribution</text>
+  <text x="97" y="253" text-anchor="middle" font-size="9" fill="#8b949e">Correlation · Outliers</text>
+  <text x="97" y="266" text-anchor="middle" font-size="8" fill="#6e7681">01_data_analysis.ipynb</text>
+</g>
+
+<!-- Arrow P1→P2 -->
+<line x1="166" y1="230" x2="188" y2="230" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+
+<!-- Phase 2: Imputation -->
+<g class="node" data-tip="Phase 2: Imputation Study — 4 strategies tested in leakage-free CV: Mean/Mode, KNN(k=5), MICE, Missingness Indicator. Winner: KNN k=5. Notebook: 02_imputation_study.ipynb">
+  <rect x="188" y="185" width="148" height="90" rx="8" fill="url(#n-green)" stroke="#3fb950" stroke-width="1.5" filter="url(#shadow)"/>
+  <circle cx="262" cy="185" r="12" fill="#0d1117" stroke="#3fb950" stroke-width="1.5"/>
+  <text x="262" y="190" text-anchor="middle" font-size="10" font-weight="800" fill="#3fb950">P2</text>
+  <text x="262" y="208" text-anchor="middle" font-size="18">💧</text>
+  <text x="262" y="225" text-anchor="middle" font-size="11" font-weight="700" fill="#3fb950">Imputation Study</text>
+  <text x="262" y="240" text-anchor="middle" font-size="9" fill="#8b949e">Mean/Mode · KNN</text>
+  <text x="262" y="253" text-anchor="middle" font-size="9" fill="#8b949e">MICE · Miss.Indicator</text>
+  <text x="262" y="266" text-anchor="middle" font-size="8" fill="#6e7681">02_imputation.ipynb</text>
+</g>
+
+<!-- Arrow P2→P3 -->
+<line x1="336" y1="230" x2="358" y2="230" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+<!-- Phase 3: Feature Selection -->
+<g class="node" data-tip="Phase 3: Consensus Feature Selection — 4 methods (LASSO, RFE, Mutual Info, SHAP), features with ≥3/4 votes kept → 7-feature subset retaining 99.96% AUC. Notebook: 03_feature_selection.ipynb">
+  <rect x="358" y="185" width="148" height="90" rx="8" fill="url(#n-purple)" stroke="#a371f7" stroke-width="1.5" filter="url(#shadow)"/>
+  <circle cx="432" cy="185" r="12" fill="#0d1117" stroke="#a371f7" stroke-width="1.5"/>
+  <text x="432" y="190" text-anchor="middle" font-size="10" font-weight="800" fill="#a371f7">P3</text>
+  <text x="432" y="208" text-anchor="middle" font-size="18">🎯</text>
+  <text x="432" y="225" text-anchor="middle" font-size="11" font-weight="700" fill="#a371f7">Feature Selection</text>
+  <text x="432" y="240" text-anchor="middle" font-size="9" fill="#8b949e">LASSO · RFE</text>
+  <text x="432" y="253" text-anchor="middle" font-size="9" fill="#8b949e">Mutual Info · SHAP</text>
+  <text x="432" y="266" text-anchor="middle" font-size="8" fill="#6e7681">03_feature_sel.ipynb</text>
+</g>
+
+<!-- Arrow P3→P4 -->
+<line x1="506" y1="230" x2="528" y2="230" stroke="#a371f7" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+
+<!-- Phase 4: Model Training -->
+<g class="node" data-tip="Phase 4: Leakage-Free Model Training — 9 classifiers, 10-fold stratified CV, KNNImputer+StandardScaler fitted per training fold only. Notebook: 04_model_training.ipynb">
+  <rect x="528" y="185" width="148" height="90" rx="8" fill="url(#n-orange)" stroke="#f0883e" stroke-width="1.5" filter="url(#shadow)"/>
+  <circle cx="602" cy="185" r="12" fill="#0d1117" stroke="#f0883e" stroke-width="1.5"/>
+  <text x="602" y="190" text-anchor="middle" font-size="10" font-weight="800" fill="#f0883e">P4</text>
+  <text x="602" y="208" text-anchor="middle" font-size="18">🤖</text>
+  <text x="602" y="225" text-anchor="middle" font-size="11" font-weight="700" fill="#f0883e">Model Training</text>
+  <text x="602" y="240" text-anchor="middle" font-size="9" fill="#8b949e">9 classifiers · 10-fold</text>
+  <text x="602" y="253" text-anchor="middle" font-size="9" fill="#8b949e">Stratified CV</text>
+  <text x="602" y="266" text-anchor="middle" font-size="8" fill="#6e7681">04_model_training.ipynb</text>
+</g>
+
+<!-- Arrow P4→P5 -->
+<line x1="676" y1="230" x2="698" y2="230" stroke="#f0883e" stroke-width="1.5" marker-end="url(#arr-orange)"/>
+
+<!-- Phase 5: HPO -->
+<g class="node" data-tip="Phase 5: Bayesian HPO via Optuna — 100 trials per model, TPE sampler, 5-fold CV AUC objective. RF: n_est=500,depth=13. XGB: n_est=500,depth=12,lr=0.0646. GB best gain: ΔAUC +0.00098. Notebook: 05_hyperparameter_tuning.ipynb">
+  <rect x="698" y="185" width="148" height="90" rx="8" fill="url(#n-gray)" stroke="#d29922" stroke-width="1.5" filter="url(#shadow)"/>
+  <circle cx="772" cy="185" r="12" fill="#0d1117" stroke="#d29922" stroke-width="1.5"/>
+  <text x="772" y="190" text-anchor="middle" font-size="10" font-weight="800" fill="#d29922">P5</text>
+  <text x="772" y="208" text-anchor="middle" font-size="18">⚙️</text>
+  <text x="772" y="225" text-anchor="middle" font-size="11" font-weight="700" fill="#d29922">Bayesian HPO</text>
+  <text x="772" y="240" text-anchor="middle" font-size="9" fill="#8b949e">Optuna · 100 trials</text>
+  <text x="772" y="253" text-anchor="middle" font-size="9" fill="#8b949e">TPE · RF,XGB,CB,GB,SVM</text>
+  <text x="772" y="266" text-anchor="middle" font-size="8" fill="#6e7681">05_hyperparameter.ipynb</text>
+</g>
+
+<!-- Arrow P5→P6 -->
+<line x1="846" y1="230" x2="868" y2="230" stroke="#d29922" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+
+<!-- Phase 6: SHAP -->
+<g class="node" data-tip="Phase 6: SHAP XAI Analysis — TreeExplainer for tree models, beeswarm plots, top features: albumin(0.152), sc(0.088), hemo(0.086), sg(0.062). Notebook: 06_xai_analysis.ipynb">
+  <rect x="868" y="185" width="130" height="90" rx="8" fill="url(#n-pink)" stroke="#f778ba" stroke-width="1.5" filter="url(#shadow)"/>
+  <circle cx="933" cy="185" r="12" fill="#0d1117" stroke="#f778ba" stroke-width="1.5"/>
+  <text x="933" y="190" text-anchor="middle" font-size="10" font-weight="800" fill="#f778ba">P6</text>
+  <text x="933" y="208" text-anchor="middle" font-size="18">🧠</text>
+  <text x="933" y="225" text-anchor="middle" font-size="11" font-weight="700" fill="#f778ba">SHAP XAI</text>
+  <text x="933" y="240" text-anchor="middle" font-size="9" fill="#8b949e">TreeExplainer</text>
+  <text x="933" y="253" text-anchor="middle" font-size="9" fill="#8b949e">Beeswarm plots</text>
+  <text x="933" y="266" text-anchor="middle" font-size="8" fill="#6e7681">06_xai_analysis.ipynb</text>
+</g>
+
+<!-- Arrow P6→P7 -->
+<line x1="998" y1="230" x2="1016" y2="230" stroke="#f778ba" stroke-width="1.5" marker-end="url(#arr-pink)"/>
+
+<!-- Phase 7: Clinical Validation -->
+<g class="node" data-tip="Phase 7: KDIGO Clinical Validation — CKD-EPI 2021 eGFR, stages G1-G5, Decision Curve Analysis, subgroup analysis (age, htn, dm). Notebook: 07_clinical_validation.ipynb">
+  <rect x="1016" y="185" width="122" height="90" rx="8" fill="url(#n-teal)" stroke="#56d364" stroke-width="1.5" filter="url(#shadow)"/>
+  <circle cx="1077" cy="185" r="12" fill="#0d1117" stroke="#56d364" stroke-width="1.5"/>
+  <text x="1077" y="190" text-anchor="middle" font-size="10" font-weight="800" fill="#56d364">P7</text>
+  <text x="1077" y="208" text-anchor="middle" font-size="18">🏥</text>
+  <text x="1077" y="225" text-anchor="middle" font-size="11" font-weight="700" fill="#56d364">KDIGO Validation</text>
+  <text x="1077" y="240" text-anchor="middle" font-size="9" fill="#8b949e">eGFR · G1-G5</text>
+  <text x="1077" y="253" text-anchor="middle" font-size="9" fill="#8b949e">DCA · Subgroup</text>
+  <text x="1077" y="266" text-anchor="middle" font-size="8" fill="#6e7681">07_clinical_val.ipynb</text>
+</g>
+
+
+<!-- ──── Preprocessing Detail Row ──── -->
+<!-- Leakage-Free Pipeline box -->
+<rect x="28" y="295" width="460" height="60" rx="6" fill="#0d1f0d" stroke="#3fb95033" stroke-width="1"/>
+<text x="48" y="316" font-size="10" font-weight="700" fill="#3fb950">✓  LEAKAGE-FREE CV PIPELINE</text>
+<text x="48" y="332" font-size="10" fill="#8b949e">KNNImputer(k=5) fitted on train fold ONLY  →  StandardScaler  →  Classifier</text>
+<text x="48" y="347" font-size="10" fill="#6e7681">Pipeline encapsulated in sklearn.Pipeline — test data never touches imputer.fit()</text>
+
+<!-- Consensus Feature Selection result box -->
+<rect x="508" y="295" width="630" height="60" rx="6" fill="#15082a" stroke="#a371f733" stroke-width="1"/>
+<text x="528" y="316" font-size="10" font-weight="700" fill="#a371f7">✓  7-FEATURE CONSENSUS SUBSET  (≥3/4 votes)</text>
+<text x="528" y="332" font-size="10" fill="#8b949e">sg  ·  hemo  ·  al  ·  rbc  ·  pcv  ·  htn  ·  dm       AUC = 0.9996  (retains 99.96% discriminative power)</text>
+<text x="528" y="347" font-size="10" fill="#6e7681">LASSO  ·  RFE (RF)  ·  Mutual Information  ·  SHAP importance  →  majority vote</text>
+
+
+<!-- ──── 9 Model Pills row ──── -->
+<rect x="28" y="375" width="830" height="50" rx="6" fill="#0f0a1e" stroke="#a371f733" stroke-width="1"/>
+<text x="48" y="397" font-size="10" font-weight="700" fill="#a371f7">9 CLASSIFIER SUITE</text>
+<!-- Pills -->
+<rect x="160" y="382" width="72" height="22" rx="11" fill="#1a1230" stroke="#a371f744"/><text x="196" y="397" text-anchor="middle" font-size="9" fill="#a371f7">Log. Regression</text>
+<rect x="238" y="382" width="46" height="22" rx="11" fill="#1a1230" stroke="#a371f744"/><text x="261" y="397" text-anchor="middle" font-size="9" fill="#a371f7">SVM</text>
+<rect x="290" y="382" width="50" height="22" rx="11" fill="#1a1230" stroke="#a371f744"/><text x="315" y="397" text-anchor="middle" font-size="9" fill="#a371f7">Dec.Tree</text>
+<rect x="346" y="382" width="56" height="22" rx="11" fill="#1a1230" stroke="#a371f744"/><text x="374" y="397" text-anchor="middle" font-size="9" fill="#a371f7">Rand.Forest</text>
+<rect x="408" y="382" width="56" height="22" rx="11" fill="#1a1230" stroke="#a371f744"/><text x="436" y="397" text-anchor="middle" font-size="9" fill="#a371f7">Grad.Boost</text>
+<rect x="470" y="382" width="50" height="22" rx="11" fill="#1a1230" stroke="#a371f744"/><text x="495" y="397" text-anchor="middle" font-size="9" fill="#a371f7">XGBoost</text>
+<rect x="526" y="382" width="54" height="22" rx="11" fill="#1a1230" stroke="#a371f744"/><text x="553" y="397" text-anchor="middle" font-size="9" fill="#a371f7">CatBoost</text>
+<rect x="586" y="382" width="40" height="22" rx="11" fill="#1a1230" stroke="#a371f744"/><text x="606" y="397" text-anchor="middle" font-size="9" fill="#a371f7">KNN</text>
+<rect x="632" y="382" width="60" height="22" rx="11" fill="#1a1230" stroke="#a371f744"/><text x="662" y="397" text-anchor="middle" font-size="9" fill="#a371f7">Naïve Bayes</text>
+
+<!-- Best metrics strip -->
+<rect x="874" y="375" width="265" height="50" rx="6" fill="#0a1e12" stroke="#3fb95033" stroke-width="1"/>
+<text x="893" y="395" font-size="10" font-weight="700" fill="#3fb950">BEST RESULTS</text>
+<text x="893" y="412" font-size="9" fill="#8b949e">AUC 0.9997 (LR)  ·  Acc 99.25%  ·  F₁ 0.994  ·  MCC 0.984</text>
+<text x="893" y="425" font-size="9" fill="#8b949e">RF: FN=0  ·  LR/SVM: FP=0  (pooled 10-fold)</text>
+
+
+<!-- ══════════════════════════════════════════════╗
+     MAIN VERTICAL ARROW: Research → Models       ║
+══════════════════════════════════════════════════ -->
+<line x1="580" y1="446" x2="580" y2="456" stroke="#a371f7" stroke-width="2" marker-end="url(#arr-purple)"/>
+<text x="595" y="453" font-size="9" fill="#6e7681">pickle.dump() / .json save</text>
+
+
+<!-- ══════════════════════════════════════════════╗
+     LAYER 3 — MODEL FILES                        ║
+══════════════════════════════════════════════════ -->
+
+<!-- 9 model file boxes -->
+<g data-tip="Pre-trained model files serialised via pickle/XGBoost JSON">
+  <rect x="28" y="492" width="68" height="54" rx="6" fill="url(#n-purple)" stroke="#a371f766" stroke-width="1"/>
+  <text x="62" y="512" text-anchor="middle" font-size="16">🔗</text>
+  <text x="62" y="527" text-anchor="middle" font-size="8" fill="#a371f7" font-weight="700">log_reg</text>
+  <text x="62" y="539" text-anchor="middle" font-size="7" fill="#6e7681">.pkl</text>
+</g>
+<g data-tip="Support Vector Machine (RBF kernel, C=233.86, γ=0.0387)">
+  <rect x="104" y="492" width="68" height="54" rx="6" fill="url(#n-purple)" stroke="#a371f766" stroke-width="1"/>
+  <text x="138" y="512" text-anchor="middle" font-size="16">🔴</text>
+  <text x="138" y="527" text-anchor="middle" font-size="8" fill="#a371f7" font-weight="700">svm</text>
+  <text x="138" y="539" text-anchor="middle" font-size="7" fill="#6e7681">.pkl</text>
+</g>
+<g data-tip="Decision Tree classifier">
+  <rect x="180" y="492" width="68" height="54" rx="6" fill="url(#n-purple)" stroke="#a371f766" stroke-width="1"/>
+  <text x="214" y="512" text-anchor="middle" font-size="16">🌲</text>
+  <text x="214" y="527" text-anchor="middle" font-size="8" fill="#a371f7" font-weight="700">dec_tree</text>
+  <text x="214" y="539" text-anchor="middle" font-size="7" fill="#6e7681">.pkl</text>
+</g>
+<g data-tip="Random Forest (n_est=500, max_depth=13, bootstrap=False) — achieves FN=0">
+  <rect x="256" y="492" width="68" height="54" rx="6" fill="url(#n-purple)" stroke="#a371f7" stroke-width="2"/>
+  <text x="290" y="512" text-anchor="middle" font-size="16">🌳</text>
+  <text x="290" y="527" text-anchor="middle" font-size="8" fill="#a371f7" font-weight="700">rand_forest</text>
+  <text x="290" y="539" text-anchor="middle" font-size="7" fill="#56d364">FN=0 ★</text>
+</g>
+<g data-tip="Gradient Boosting (n_est=400, depth=2, lr=0.2796, ΔAUC +0.00098 after HPO)">
+  <rect x="332" y="492" width="68" height="54" rx="6" fill="url(#n-purple)" stroke="#a371f766" stroke-width="1"/>
+  <text x="366" y="512" text-anchor="middle" font-size="16">📈</text>
+  <text x="366" y="527" text-anchor="middle" font-size="8" fill="#a371f7" font-weight="700">grad_boost</text>
+  <text x="366" y="539" text-anchor="middle" font-size="7" fill="#6e7681">.pkl</text>
+</g>
+<g data-tip="XGBoost (n_est=500, max_depth=12, lr=0.0646, subsample=0.578)">
+  <rect x="408" y="492" width="68" height="54" rx="6" fill="url(#n-purple)" stroke="#a371f766" stroke-width="1"/>
+  <text x="442" y="512" text-anchor="middle" font-size="16">⚡</text>
+  <text x="442" y="527" text-anchor="middle" font-size="8" fill="#a371f7" font-weight="700">xgboost</text>
+  <text x="442" y="539" text-anchor="middle" font-size="7" fill="#6e7681">.json</text>
+</g>
+<g data-tip="CatBoost (iterations=450, depth=6, lr=0.161)">
+  <rect x="484" y="492" width="68" height="54" rx="6" fill="url(#n-purple)" stroke="#a371f766" stroke-width="1"/>
+  <text x="518" y="512" text-anchor="middle" font-size="16">🐱</text>
+  <text x="518" y="527" text-anchor="middle" font-size="8" fill="#a371f7" font-weight="700">catboost</text>
+  <text x="518" y="539" text-anchor="middle" font-size="7" fill="#6e7681">.pkl</text>
+</g>
+<g data-tip="K-Nearest Neighbours (k=5)">
+  <rect x="560" y="492" width="68" height="54" rx="6" fill="url(#n-purple)" stroke="#a371f766" stroke-width="1"/>
+  <text x="594" y="512" text-anchor="middle" font-size="16">👥</text>
+  <text x="594" y="527" text-anchor="middle" font-size="8" fill="#a371f7" font-weight="700">knn</text>
+  <text x="594" y="539" text-anchor="middle" font-size="7" fill="#6e7681">.pkl</text>
+</g>
+<g data-tip="Naïve Bayes (GaussianNB)">
+  <rect x="636" y="492" width="68" height="54" rx="6" fill="url(#n-purple)" stroke="#a371f766" stroke-width="1"/>
+  <text x="670" y="512" text-anchor="middle" font-size="16">🎲</text>
+  <text x="670" y="527" text-anchor="middle" font-size="8" fill="#a371f7" font-weight="700">naive_bayes</text>
+  <text x="670" y="539" text-anchor="middle" font-size="7" fill="#6e7681">.pkl</text>
+</g>
+
+<!-- Separator line -->
+<line x1="720" y1="495" x2="720" y2="543" stroke="#30363d" stroke-width="1"/>
+
+<!-- Preprocessing artefacts -->
+<g data-tip="LabelEncoder per categorical column — 13 encoders saved as dict">
+  <rect x="734" y="492" width="120" height="54" rx="6" fill="url(#n-gray)" stroke="#58a6ff44" stroke-width="1"/>
+  <text x="794" y="512" text-anchor="middle" font-size="14">🔤</text>
+  <text x="794" y="528" text-anchor="middle" font-size="8" fill="#58a6ff" font-weight="700">le_dict.pkl</text>
+  <text x="794" y="541" text-anchor="middle" font-size="7" fill="#6e7681">13 LabelEncoders</text>
+</g>
+<g data-tip="KNNImputer(k=5) fitted on full training data — 24 features">
+  <rect x="864" y="492" width="120" height="54" rx="6" fill="url(#n-gray)" stroke="#58a6ff44" stroke-width="1"/>
+  <text x="924" y="512" text-anchor="middle" font-size="14">💧</text>
+  <text x="924" y="528" text-anchor="middle" font-size="8" fill="#58a6ff" font-weight="700">knn_imputer.pkl</text>
+  <text x="924" y="541" text-anchor="middle" font-size="7" fill="#6e7681">KNNImputer k=5</text>
+</g>
+<g data-tip="StandardScaler fitted on training set — zero mean, unit variance">
+  <rect x="994" y="492" width="120" height="54" rx="6" fill="url(#n-gray)" stroke="#58a6ff44" stroke-width="1"/>
+  <text x="1054" y="512" text-anchor="middle" font-size="14">⚖️</text>
+  <text x="1054" y="528" text-anchor="middle" font-size="8" fill="#58a6ff" font-weight="700">scaler.pkl</text>
+  <text x="1054" y="541" text-anchor="middle" font-size="7" fill="#6e7681">StandardScaler</text>
+</g>
+
+
+<!-- ══════════════════════════════════════════════╗
+     MAIN VERTICAL ARROW: Models → Backend        ║
+══════════════════════════════════════════════════ -->
+<line x1="580" y1="598" x2="580" y2="606" stroke="#f0883e" stroke-width="2" marker-end="url(#arr-orange)"/>
+<text x="595" y="604" font-size="9" fill="#6e7681">loaded at startup · pickle.load()</text>
+
+
+<!-- ══════════════════════════════════════════════╗
+     LAYER 4 — FLASK BACKEND                      ║
+══════════════════════════════════════════════════ -->
+
+<!-- 4 backend nodes -->
+<!-- Startup Loader -->
+<g class="node" data-tip="_load_notebook_pipeline(): loads le_dict.pkl, knn_imputer.pkl, scaler.pkl then loads 9 model files from models/ directory at Flask startup">
+  <rect x="28" y="645" width="220" height="98" rx="8" fill="url(#n-orange)" stroke="#f0883e" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="138" y="666" text-anchor="middle" font-size="11" font-weight="700" fill="#f0883e">🚀  Startup Loader</text>
+  <text x="48" y="683" font-size="9" fill="#8b949e">① Load le_dict.pkl  (13 encoders)</text>
+  <text x="48" y="697" font-size="9" fill="#8b949e">② Load knn_imputer.pkl</text>
+  <text x="48" y="711" font-size="9" fill="#8b949e">③ Load scaler.pkl</text>
+  <text x="48" y="725" font-size="9" fill="#8b949e">④ Load 9 model files  →  models{}</text>
+  <text x="48" y="737" font-size="9" fill="#8b949e">⑤ Flask app.run(0.0.0.0 : 8080)</text>
+</g>
+
+<!-- Arrow →  -->
+<line x1="248" y1="694" x2="268" y2="694" stroke="#f0883e" stroke-width="1.5" marker-end="url(#arr-orange)"/>
+
+<!-- preprocess_features box -->
+<g class="node" data-tip="preprocess_features(form_data): parses 24 fields, applies LabelEncoder, KNNImputer.transform(), StandardScaler.transform() → returns numpy array (1×24)">
+  <rect x="268" y="645" width="220" height="98" rx="8" fill="url(#n-orange)" stroke="#f0883e" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="378" y="666" text-anchor="middle" font-size="11" font-weight="700" fill="#f0883e">🔄  preprocess_features()</text>
+  <text x="285" y="686" font-size="9" fill="#8b949e">parse 24 form fields</text>
+  <text x="285" y="700" font-size="9" fill="#58a6ff">↓  LabelEncoder · 13 cols</text>
+  <text x="285" y="714" font-size="9" fill="#3fb950">↓  KNNImputer.transform()</text>
+  <text x="285" y="728" font-size="9" fill="#d29922">↓  StandardScaler.transform()</text>
+  <text x="285" y="742" font-size="9" fill="#56d364">→  numpy (1 × 24)  ✓</text>
+</g>
+
+<!-- Arrow → -->
+<line x1="488" y1="694" x2="508" y2="694" stroke="#f0883e" stroke-width="1.5" marker-end="url(#arr-orange)"/>
+
+<!-- API Endpoints -->
+<g class="node" data-tip="REST API: POST /api/predict → 9 models + majority-vote ensemble   POST /api/explain → SHAP values per model   GET/POST /api/patients   GET / SPA entry   GET /images/ /static/">
+  <rect x="508" y="645" width="220" height="98" rx="8" fill="url(#n-orange)" stroke="#f0883e" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="618" y="666" text-anchor="middle" font-size="11" font-weight="700" fill="#f0883e">🌐  REST API Endpoints</text>
+  <rect x="520" y="673" width="16" height="11" rx="3" fill="#1a3a1a"/><text x="528" y="682" text-anchor="middle" font-size="7" fill="#3fb950">GET</text>
+  <text x="542" y="682" font-size="9" fill="#8b949e">/  (SPA)</text>
+  <rect x="520" y="688" width="20" height="11" rx="3" fill="#3a1a1a"/><text x="530" y="697" text-anchor="middle" font-size="7" fill="#f0883e">POST</text>
+  <text x="546" y="697" font-size="9" fill="#8b949e">/api/predict</text>
+  <rect x="520" y="703" width="20" height="11" rx="3" fill="#3a1a1a"/><text x="530" y="712" text-anchor="middle" font-size="7" fill="#f0883e">POST</text>
+  <text x="546" y="712" font-size="9" fill="#8b949e">/api/explain</text>
+  <rect x="520" y="718" width="20" height="11" rx="3" fill="#1a3a1a"/><text x="530" y="727" text-anchor="middle" font-size="7" fill="#3fb950">GET</text>
+  <text x="546" y="727" font-size="9" fill="#8b949e">/api/patients</text>
+  <rect x="520" y="733" width="20" height="11" rx="3" fill="#3a1a1a"/><text x="530" y="742" text-anchor="middle" font-size="7" fill="#f0883e">POST</text>
+  <text x="546" y="742" font-size="9" fill="#8b949e">/api/patients</text>
+</g>
+
+<!-- Arrow → -->
+<line x1="728" y1="694" x2="748" y2="694" stroke="#f0883e" stroke-width="1.5" marker-end="url(#arr-orange)"/>
+
+<!-- SHAP Engine -->
+<g class="node" data-tip="SHAP Engine: TreeExplainer for RF/GB/DT/XGB/CatBoost (fast, exact), LinearExplainer for LR, KernelExplainer for SVM/KNN/NB (approx, nsamples=100). Returns {feature: shap_value} per model.">
+  <rect x="748" y="645" width="220" height="98" rx="8" fill="url(#n-orange)" stroke="#f0883e" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="858" y="666" text-anchor="middle" font-size="11" font-weight="700" fill="#f0883e">🧠  SHAP Explainer Engine</text>
+  <rect x="760" y="672" width="70" height="14" rx="4" fill="#0e2e18"/><text x="795" y="683" text-anchor="middle" font-size="8" fill="#56d364">TreeExplainer</text>
+  <text x="836" y="683" font-size="8" fill="#6e7681">RF·GB·DT·XGB·CB</text>
+  <rect x="760" y="690" width="68" height="14" rx="4" fill="#0d1f3a"/><text x="794" y="701" text-anchor="middle" font-size="8" fill="#58a6ff">LinearExplainer</text>
+  <text x="833" y="701" font-size="8" fill="#6e7681">Logistic Reg</text>
+  <rect x="760" y="708" width="72" height="14" rx="4" fill="#3a2a10"/><text x="796" y="719" text-anchor="middle" font-size="8" fill="#d29922">KernelExplainer</text>
+  <text x="838" y="719" font-size="8" fill="#6e7681">SVM·KNN·NB</text>
+  <text x="760" y="736" font-size="8" fill="#8b949e">→  dict: {feature → SHAP value}</text>
+</g>
+
+<!-- Ensemble box on the right side -->
+<g class="node" data-tip="Majority-Vote Ensemble: final prediction is CKD if ≥5 of 9 models vote CKD. Accuracy: 99.25%, F₁: 0.994, MCC: 0.984.">
+  <rect x="988" y="645" width="152" height="98" rx="8" fill="#1a0a2e" stroke="#a371f7" stroke-width="2" filter="url(#glow-purple)"/>
+  <text x="1064" y="666" text-anchor="middle" font-size="11" font-weight="700" fill="#a371f7">🗳️  Ensemble</text>
+  <text x="1064" y="683" text-anchor="middle" font-size="10" fill="#8b949e">Majority Vote</text>
+  <text x="1064" y="697" text-anchor="middle" font-size="9" fill="#8b949e">≥5 / 9 → CKD</text>
+  <line x1="1004" y1="706" x2="1134" y2="706" stroke="#30363d" stroke-width="1"/>
+  <text x="1064" y="720" text-anchor="middle" font-size="9" fill="#3fb950">Acc 99.25%</text>
+  <text x="1064" y="732" text-anchor="middle" font-size="9" fill="#3fb950">F₁ 0.994  MCC 0.984</text>
+</g>
+
+<!-- Arrow API → Ensemble -->
+<line x1="973" y1="694" x2="986" y2="694" stroke="#a371f7" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr-purple)"/>
+
+
+<!-- ══════════════════════════════════════════════╗
+     MAIN VERTICAL ARROW: Backend → Frontend      ║
+══════════════════════════════════════════════════ -->
+<line x1="580" y1="755" x2="580" y2="775" stroke="#f778ba" stroke-width="2" marker-end="url(#arr-pink)"/>
+<text x="596" y="770" font-size="9" fill="#6e7681">JSON response · fetch()</text>
+
+
+<!-- ══════════════════════════════════════════════╗
+     LAYER 5 — FRONTEND / SPA                     ║
+══════════════════════════════════════════════════ -->
+
+<!-- 6 SPA screen nodes -->
+<g class="node" data-tip="Login screen: role-based authentication (Admin / Doctor / Nurse), avatar selection, session management via Flask sessions">
+  <rect x="28" y="815" width="155" height="96" rx="8" fill="url(#n-pink)" stroke="#f778ba" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="105" y="838" text-anchor="middle" font-size="18">🔐</text>
+  <text x="105" y="855" text-anchor="middle" font-size="11" font-weight="700" fill="#f778ba">1. Login</text>
+  <text x="105" y="870" text-anchor="middle" font-size="9" fill="#8b949e">Role-based auth</text>
+  <text x="105" y="883" text-anchor="middle" font-size="9" fill="#8b949e">Admin / Doctor / Nurse</text>
+  <text x="105" y="896" text-anchor="middle" font-size="8" fill="#6e7681">index.html · app.js</text>
+  <text x="105" y="908" text-anchor="middle" font-size="8" fill="#6e7681">database.py</text>
+</g>
+<line x1="183" y1="863" x2="203" y2="863" stroke="#f778ba" stroke-width="1.5" marker-end="url(#arr-pink)"/>
+
+<g class="node" data-tip="Patient Info: register new patient or look up existing patient by ID/name. Stores name, age, gender. Persisted via SQLite database.">
+  <rect x="203" y="815" width="155" height="96" rx="8" fill="url(#n-pink)" stroke="#f778ba" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="280" y="838" text-anchor="middle" font-size="18">👤</text>
+  <text x="280" y="855" text-anchor="middle" font-size="11" font-weight="700" fill="#f778ba">2. Patient Info</text>
+  <text x="280" y="870" text-anchor="middle" font-size="9" fill="#8b949e">Register / lookup</text>
+  <text x="280" y="883" text-anchor="middle" font-size="9" fill="#8b949e">Name · Age · Gender</text>
+  <text x="280" y="896" text-anchor="middle" font-size="8" fill="#6e7681">/api/patients</text>
+  <text x="280" y="908" text-anchor="middle" font-size="8" fill="#6e7681">SQLite persist</text>
+</g>
+<line x1="358" y1="863" x2="378" y2="863" stroke="#f778ba" stroke-width="1.5" marker-end="url(#arr-pink)"/>
+
+<g class="node" data-tip="24-parameter input wizard across 3 steps: Step 1 urine analysis, Step 2 blood tests, Step 3 comorbidities + physical. Validates all 24 clinical fields.">
+  <rect x="378" y="815" width="155" height="96" rx="8" fill="url(#n-pink)" stroke="#f778ba" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="455" y="838" text-anchor="middle" font-size="18">🔬</text>
+  <text x="455" y="855" text-anchor="middle" font-size="11" font-weight="700" fill="#f778ba">3. Input (24)</text>
+  <text x="455" y="870" text-anchor="middle" font-size="9" fill="#8b949e">3-step wizard</text>
+  <text x="455" y="883" text-anchor="middle" font-size="9" fill="#8b949e">11 numerical · 13 cat.</text>
+  <text x="455" y="896" text-anchor="middle" font-size="8" fill="#6e7681">form validation</text>
+  <text x="455" y="908" text-anchor="middle" font-size="8" fill="#6e7681">clinical ranges check</text>
+</g>
+<line x1="533" y1="863" x2="553" y2="863" stroke="#f778ba" stroke-width="1.5" marker-end="url(#arr-pink)"/>
+
+<g class="node" data-tip="Prediction Results: POST /api/predict → shows all 9 model predictions with confidence %, ensemble verdict (CKD / Not CKD), donut chart, KDIGO eGFR stage.">
+  <rect x="553" y="815" width="155" height="96" rx="8" fill="url(#n-pink)" stroke="#f778ba" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="630" y="838" text-anchor="middle" font-size="18">🤖</text>
+  <text x="630" y="855" text-anchor="middle" font-size="11" font-weight="700" fill="#f778ba">4. Prediction</text>
+  <text x="630" y="870" text-anchor="middle" font-size="9" fill="#8b949e">9 model results</text>
+  <text x="630" y="883" text-anchor="middle" font-size="9" fill="#8b949e">Ensemble verdict</text>
+  <text x="630" y="896" text-anchor="middle" font-size="8" fill="#6e7681">confidence %</text>
+  <text x="630" y="908" text-anchor="middle" font-size="8" fill="#6e7681">KDIGO eGFR stage</text>
+</g>
+<line x1="708" y1="863" x2="728" y2="863" stroke="#f778ba" stroke-width="1.5" marker-end="url(#arr-pink)"/>
+
+<g class="node" data-tip="SHAP XAI Dashboard: POST /api/explain → 5 interactive Plotly charts: Feature Impact bar, Waterfall, Risk vs Protective donut, Risk-o-Meter gauge, Clinical Normal Ranges.">
+  <rect x="728" y="815" width="155" height="96" rx="8" fill="url(#n-pink)" stroke="#f778ba" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="805" y="838" text-anchor="middle" font-size="18">📊</text>
+  <text x="805" y="855" text-anchor="middle" font-size="11" font-weight="700" fill="#f778ba">5. SHAP Dashboard</text>
+  <text x="805" y="870" text-anchor="middle" font-size="9" fill="#8b949e">5 Plotly charts</text>
+  <text x="805" y="883" text-anchor="middle" font-size="9" fill="#8b949e">Risk · Waterfall · Gauge</text>
+  <text x="805" y="896" text-anchor="middle" font-size="8" fill="#6e7681">model selector</text>
+  <text x="805" y="908" text-anchor="middle" font-size="8" fill="#6e7681">clinical interpretation</text>
+</g>
+<line x1="883" y1="863" x2="903" y2="863" stroke="#f778ba" stroke-width="1.5" marker-end="url(#arr-pink)"/>
+
+<g class="node" data-tip="Clinical Report: KDIGO G1-G5 staging via CKD-EPI 2021 sex-neutral equation, clinical summary, risk drivers narrative, exportable report for nephrologist.">
+  <rect x="903" y="815" width="155" height="96" rx="8" fill="url(#n-pink)" stroke="#f778ba" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="980" y="838" text-anchor="middle" font-size="18">🏥</text>
+  <text x="980" y="855" text-anchor="middle" font-size="11" font-weight="700" fill="#f778ba">6. Clinical Report</text>
+  <text x="980" y="870" text-anchor="middle" font-size="9" fill="#8b949e">KDIGO G1–G5</text>
+  <text x="980" y="883" text-anchor="middle" font-size="9" fill="#8b949e">CKD-EPI 2021 eGFR</text>
+  <text x="980" y="896" text-anchor="middle" font-size="8" fill="#6e7681">risk drivers</text>
+  <text x="980" y="908" text-anchor="middle" font-size="8" fill="#6e7681">clinical summary</text>
+</g>
+
+
+<!-- ══════════════════════════════════════════════╗
+     MAIN VERTICAL ARROW: Frontend → Deploy       ║
+══════════════════════════════════════════════════ -->
+<line x1="580" y1="930" x2="580" y2="944" stroke="#56d364" stroke-width="2" marker-end="url(#arr-teal)"/>
+
+
+<!-- ══════════════════════════════════════════════╗
+     LAYER 6 — DEPLOYMENT                         ║
+══════════════════════════════════════════════════ -->
+
+<g class="node" data-tip="Dockerfile: FROM python:3.11-slim, libgomp1 for XGBoost, WORKDIR /app, COPY Frontend/ + models/, EXPOSE 8080, CMD flask run">
+  <rect x="50" y="978" width="150" height="76" rx="8" fill="url(#n-teal)" stroke="#56d364" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="125" y="1000" text-anchor="middle" font-size="22">🐳</text>
+  <text x="125" y="1020" text-anchor="middle" font-size="12" font-weight="700" fill="#56d364">Docker</text>
+  <text x="125" y="1035" text-anchor="middle" font-size="9" fill="#8b949e">python:3.11-slim</text>
+  <text x="125" y="1048" text-anchor="middle" font-size="9" fill="#8b949e">Port 8080</text>
+</g>
+
+<g class="node" data-tip="render.yaml: web service, auto-deploy from GitHub, free tier available, environment variables via Render dashboard">
+  <rect x="232" y="978" width="150" height="76" rx="8" fill="url(#n-teal)" stroke="#56d364" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="307" y="1000" text-anchor="middle" font-size="22">☁️</text>
+  <text x="307" y="1020" text-anchor="middle" font-size="12" font-weight="700" fill="#56d364">Render</text>
+  <text x="307" y="1035" text-anchor="middle" font-size="9" fill="#8b949e">render.yaml</text>
+  <text x="307" y="1048" text-anchor="middle" font-size="9" fill="#8b949e">auto-deploy from git</text>
+</g>
+
+<g class="node" data-tip="Flask server: FLASK_RUN_HOST=0.0.0.0, FLASK_RUN_PORT=8080, production-ready with gunicorn">
+  <rect x="414" y="978" width="150" height="76" rx="8" fill="url(#n-teal)" stroke="#56d364" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="489" y="1000" text-anchor="middle" font-size="22">🌐</text>
+  <text x="489" y="1020" text-anchor="middle" font-size="12" font-weight="700" fill="#56d364">Flask Server</text>
+  <text x="489" y="1035" text-anchor="middle" font-size="9" fill="#8b949e">0.0.0.0 : 8080</text>
+  <text x="489" y="1048" text-anchor="middle" font-size="9" fill="#8b949e">gunicorn-ready</text>
+</g>
+
+<g class="node" data-tip="Python virtual environment: ckdenv, requirements.txt, compatible with Python 3.8–3.12">
+  <rect x="596" y="978" width="150" height="76" rx="8" fill="url(#n-teal)" stroke="#56d364" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="671" y="1000" text-anchor="middle" font-size="22">📦</text>
+  <text x="671" y="1020" text-anchor="middle" font-size="12" font-weight="700" fill="#56d364">Python Env</text>
+  <text x="671" y="1035" text-anchor="middle" font-size="9" fill="#8b949e">ckdenv virtualenv</text>
+  <text x="671" y="1048" text-anchor="middle" font-size="9" fill="#8b949e">requirements.txt</text>
+</g>
+
+<g class="node" data-tip="SECRET_KEY via environment variable, role-based access (Admin/Doctor/Nurse), Flask session tokens, Apache 2.0 licence">
+  <rect x="778" y="978" width="150" height="76" rx="8" fill="url(#n-teal)" stroke="#56d364" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="853" y="1000" text-anchor="middle" font-size="22">🔒</text>
+  <text x="853" y="1020" text-anchor="middle" font-size="12" font-weight="700" fill="#56d364">Security</text>
+  <text x="853" y="1035" text-anchor="middle" font-size="9" fill="#8b949e">SECRET_KEY env</text>
+  <text x="853" y="1048" text-anchor="middle" font-size="9" fill="#8b949e">Apache 2.0 licence</text>
+</g>
+
+<g class="node" data-tip="scikit-learn, XGBoost, CatBoost, SHAP, Flask, pandas, numpy, Plotly.js, Chart.js — full ML + web stack">
+  <rect x="960" y="978" width="150" height="76" rx="8" fill="url(#n-teal)" stroke="#56d364" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="1035" y="1000" text-anchor="middle" font-size="22">⚙️</text>
+  <text x="1035" y="1020" text-anchor="middle" font-size="12" font-weight="700" fill="#56d364">Tech Stack</text>
+  <text x="1035" y="1035" text-anchor="middle" font-size="9" fill="#8b949e">sklearn · XGB · SHAP</text>
+  <text x="1035" y="1048" text-anchor="middle" font-size="9" fill="#8b949e">Plotly.js · Chart.js</text>
+</g>
+
+</svg>
+</div>
+
+<!-- Tooltip element -->
+<div class="tt" id="tt"></div>
+
+<script>
+  // ── Tooltip behaviour ─────────────────────────────────────────────────────
+  const tt = document.getElementById('tt');
+  document.querySelectorAll('[data-tip]').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.addEventListener('mousemove', e => {
+      tt.textContent = el.dataset.tip;
+      tt.style.display = 'block';
+      tt.style.left = (e.clientX + 14) + 'px';
+      tt.style.top  = (e.clientY + 14) + 'px';
+    });
+    el.addEventListener('mouseleave', () => { tt.style.display = 'none'; });
+  });
+
+  // ── Hover glow on SVG nodes ───────────────────────────────────────────────
+  document.querySelectorAll('svg .node rect:first-child, svg g[data-tip] rect').forEach(rect => {
+    const orig = rect.getAttribute('stroke');
+    const grp  = rect.closest('g');
+    if (!grp) return;
+    grp.addEventListener('mouseenter', () => {
+      rect.setAttribute('filter','url(#glow-blue)');
+      rect.setAttribute('stroke-width','2.5');
+    });
+    grp.addEventListener('mouseleave', () => {
+      rect.removeAttribute('filter');
+      rect.setAttribute('stroke-width', orig && orig.includes('1.5') ? '1.5' : '1');
+    });
+  });
+</script>
+</body>
+</html>
