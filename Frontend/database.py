@@ -5,8 +5,11 @@ SQLite-backed storage for users, patients, and predictions.
 
 import sqlite3
 import hashlib
+import hmac
 import os
+import uuid
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "ckd_clinical.db")
 
@@ -18,7 +21,19 @@ def get_connection():
 
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    # pbkdf2 rather than werkzeug's scrypt default: scrypt is missing from LibreSSL-based Pythons (macOS system Python).
+    return generate_password_hash(password, method="pbkdf2:sha256")
+
+
+def _is_legacy_hash(stored: str) -> bool:
+    return len(stored) == 64 and all(c in '0123456789abcdef' for c in stored)
+
+
+def verify_password(stored: str, password: str) -> bool:
+    if _is_legacy_hash(stored):
+        legacy = hashlib.sha256(password.encode()).hexdigest()
+        return hmac.compare_digest(stored, legacy)
+    return check_password_hash(stored, password)
 
 
 def init_db():
@@ -100,14 +115,21 @@ def init_db():
 # ── User operations ─────────────────────────────────────────────────────────
 
 def authenticate_user(username: str, password: str):
-    """Return user row on success, None on failure."""
+    """Return user row on success, None on failure. Upgrades legacy SHA-256 hashes."""
     conn = get_connection()
-    user = conn.execute(
-        "SELECT * FROM users WHERE username = ? AND password = ?",
-        (username, hash_password(password))
-    ).fetchone()
-    conn.close()
-    return dict(user) if user else None
+    try:
+        user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+        if not user or not verify_password(user["password"], password):
+            return None
+        if _is_legacy_hash(user["password"]):
+            conn.execute("UPDATE users SET password = ? WHERE id = ?",
+                         (hash_password(password), user["id"]))
+            conn.commit()
+        user = dict(user)
+        user.pop("password", None)
+        return user
+    finally:
+        conn.close()
 
 
 def get_all_users():
@@ -133,14 +155,9 @@ def add_user(username, password, full_name, role, email):
 
 
 def change_password(username, old_password, new_password):
-    conn = get_connection()
-    user = conn.execute(
-        "SELECT id FROM users WHERE username = ? AND password = ?",
-        (username, hash_password(old_password))
-    ).fetchone()
-    if not user:
-        conn.close()
+    if not authenticate_user(username, old_password):
         return False, "Current password is incorrect."
+    conn = get_connection()
     conn.execute(
         "UPDATE users SET password = ? WHERE username = ?",
         (hash_password(new_password), username)
@@ -154,6 +171,14 @@ def change_password(username, old_password, new_password):
 
 def save_patient(data: dict, registered_by: str):
     """Insert a patient record. Returns (True, patient_id) or (False, error_msg)."""
+    fields = ("patient_id", "mrn", "first_name", "last_name", "date_of_birth", "age", "gender",
+              "blood_group", "phone", "email", "address", "city", "state", "physician", "department")
+    phone = data.get("phone") or data.get("contact_number") or None
+    data = {**{f: (data.get(f) or None) for f in fields}, "phone": phone}
+    if not data["first_name"] or not data["last_name"]:
+        return False, "First and last name are required."
+    if not data["patient_id"]:
+        data["patient_id"] = f"NS-{datetime.now():%Y%m%d}-{uuid.uuid4().hex[:6].upper()}"
     conn = get_connection()
     try:
         conn.execute("""
@@ -281,6 +306,10 @@ def get_patient_predictions(patient_id: str):
     results = []
     for r in rows:
         d = dict(r)
+        d["ensemble_confidence"] = d.get("ensemble_conf")
+        if d.get("prediction_date"):
+            # SQLite datetime('now') is UTC with no zone marker; make it explicit ISO-8601.
+            d["prediction_date"] = d["prediction_date"].replace(" ", "T") + "Z"
         try:
             d["model_results"] = json.loads(d["model_results"])
             d["medical_params"] = json.loads(d["medical_params"])

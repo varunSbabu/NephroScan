@@ -300,19 +300,19 @@ async function handlePatientDetails(e) {
   const data = formToObj(form);
   data.registered_by = STATE.user?.username || '';
 
+  let saveError = null;
   try {
     const res = await api('/api/patients', { method: 'POST', body: data });
     if (res.status === 'success') {
-      // Fetch the saved patient record
-      const allRes = await api('/api/patients');
-      const patients = allRes.patients || [];
-      // Find the most recently registered patient by this user
-      const saved = patients.find(p => p.first_name === data.first_name && p.last_name === data.last_name);
-      STATE.currentPatient = saved || { ...data, patient_id: 'TEMP' };
+      // save_patient returns the new patient_id as the message
+      const pRes = await api(`/api/patients/${encodeURIComponent(res.message)}`);
+      STATE.currentPatient = pRes.patient || { ...data, patient_id: res.message };
     } else {
+      saveError = res.message || 'Unknown error';
       STATE.currentPatient = { ...data, patient_id: 'TEMP' };
     }
-  } catch (_) {
+  } catch (err) {
+    saveError = err.message;
     STATE.currentPatient = { ...data, patient_id: 'TEMP' };
   }
 
@@ -326,7 +326,11 @@ async function handlePatientDetails(e) {
   if (banner) banner.textContent = `Patient: ${fn} ${ln}`;
 
   navigate('view-medical-params');
-  showToast('Patient details saved.', 'success');
+  if (saveError) {
+    showToast('Patient could not be saved — this assessment will not be recorded. ' + saveError, 'error');
+  } else {
+    showToast('Patient details saved.', 'success');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1142,7 +1146,7 @@ async function startReanalysis(patientId) {
     // Pre-fill all medical params from the most recent assessment (if any)
     const history = hRes.history || [];
     if (history.length) {
-      const last = history[history.length - 1];
+      const last = history[0]; // API returns newest first
       const lastParams = last.medical_params || {};
       const form = document.getElementById('medical-params-form');
       if (form && Object.keys(lastParams).length) {

@@ -18,13 +18,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY Frontend ./Frontend
 COPY models ./models
 
-# Flask configuration
-ENV FLASK_APP=Frontend/app.py \
-    FLASK_RUN_HOST=0.0.0.0 \
-    FLASK_RUN_PORT=8080
-
+ENV PORT=8080
 EXPOSE 8080
 
-CMD ["flask", "run"]
+CMD ["sh", "-c", "gunicorn --chdir Frontend app:app --bind 0.0.0.0:${PORT} --workers 1 --timeout 120"]
 
 

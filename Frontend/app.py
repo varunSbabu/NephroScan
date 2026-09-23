@@ -23,11 +23,20 @@ app = Flask(
     static_folder=os.path.join(BASE_DIR, 'static'),
     static_url_path='/static'
 )
-app.secret_key = os.environ.get('SECRET_KEY', 'nephroscan-secret-2026')
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+app.secret_key = os.environ.get('SECRET_KEY')
+if not app.secret_key:
+    app.secret_key = os.urandom(32)
+    logger.warning("SECRET_KEY not set — using a random key; sessions will reset on restart.")
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=bool(os.environ.get('RENDER') or os.environ.get('SESSION_COOKIE_SECURE')),
+)
 
 # Paths to the pretrained models — resolved relative to this file's location
 #   so the app works regardless of which directory it's launched from.
@@ -52,6 +61,8 @@ models = {}
 
 def load_models():
     """Load all models from files (all use the shared notebook pipeline)."""
+    # Pipeline first, so one bad model file can't leave inputs unimputed/unscaled.
+    _load_notebook_pipeline()
     try:
         for model_name, path in MODEL_PATHS.items():
             if os.path.exists(path):
@@ -65,8 +76,6 @@ def load_models():
     except Exception as e:
         logger.error(f"Error loading models: {str(e)}")
         raise
-    # Load the shared notebook preprocessing pipeline
-    _load_notebook_pipeline()
 
 # All 24 feature names in the exact notebook CSV column order
 ALL_FEATURES = [
@@ -187,6 +196,24 @@ def preprocess_features(form_data):
         logger.error(f"Error in preprocessing features: {str(e)}")
         raise
 
+def _persist_prediction(payload, ensemble_result, ensemble_conf, ckd_detected, model_results):
+    """Save a prediction to the patient's history. Unsaved (TEMP) patients and failures are skipped."""
+    patient_id = payload.get('patient_id')
+    user = session.get('user')
+    if not patient_id or patient_id == 'TEMP' or not user:
+        return
+    try:
+        from database import get_patient, save_prediction
+        if not get_patient(patient_id):
+            return
+        medical_params = {k: v for k, v in payload.items() if k in ALL_FEATURES}
+        save_prediction(
+            patient_id, ensemble_result, ensemble_conf, ckd_detected,
+            _json.dumps(model_results), _json.dumps(medical_params), user['username'],
+        )
+    except Exception as exc:
+        logger.error(f"Failed to save prediction for {patient_id}: {exc}")
+
 @app.route('/api/predict', methods=['POST'])
 def api_predict():
     """API endpoint for predictions"""
@@ -241,6 +268,14 @@ def api_predict():
             for name, p in predictions.items()
         }
 
+        _persist_prediction(
+            request.json or {},
+            'ckd' if ensemble_ckd else 'no_ckd',
+            round(avg_conf / 100, 4),
+            int(ensemble_ckd),
+            model_results,
+        )
+
         return jsonify({
             'status':             'success',
             'predictions':        predictions,
@@ -281,7 +316,9 @@ def api_explain():
                     sv = explainer.shap_values(X)
 
                 elif model_name in LINEAR_MODELS:
-                    explainer = shap.LinearExplainer(model, X)
+                    # Zero vector = training mean in StandardScaler space; using X itself
+                    # as the background would make every SHAP value zero.
+                    explainer = shap.LinearExplainer(model, np.zeros((1, X.shape[1])))
                     sv = explainer.shap_values(X)
 
                 elif model_name in KERNEL_MODELS:
@@ -473,7 +510,6 @@ if not models:
         logger.error(f"Auto load_models() failed: {_e}")
 
 if __name__ == '__main__':
-    load_models()
     port = int(os.environ.get('PORT', 5000))
     host = '0.0.0.0' if os.environ.get('RENDER') else '127.0.0.1'
     app.run(host=host, port=port, debug=False, use_reloader=False)
